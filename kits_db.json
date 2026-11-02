@@ -1,0 +1,277 @@
+{
+  "COMPUTER SCIENCE - CLASS XI": [
+    {
+      "id": "kit_54b7c51c",
+      "name": "Computer System and Organization",
+      "color": "#007aff",
+      "files": [
+        "storage\\Computer System and Organization.md"
+      ],
+      "category": "COMPUTER SCIENCE - CLASS XI",
+      "flashcards": [
+        {
+          "front": "Basic Computer Organization",
+          "back": "A system consisting of input devices, a central processing unit (ALU, CU, and registers), memory units, and output devices that work together to process data.",
+          "tier": "reviewing",
+          "streak": 1
+        },
+        {
+          "front": "Input Devices",
+          "back": "Hardware components used to provide data and control signals to a computer, such as a keyboard or mouse.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Output Devices",
+          "back": "Hardware components that receive data from the computer and convert it into a human-readable form, such as a monitor or printer.",
+          "tier": "reviewing",
+          "streak": 1
+        },
+        {
+          "front": "ALU (Arithmetic Logic Unit)",
+          "back": "The part of the CPU that performs all mathematical calculations and logical operations.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "CU (Control Unit)",
+          "back": "The component of the CPU that directs the interpretation, flow, and manipulation of all data and information within the system.",
+          "tier": "reviewing",
+          "streak": 1
+        },
+        {
+          "front": "Registers",
+          "back": "Small, high-speed storage units within the CPU used to hold data, instructions, or memory addresses currently being processed.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Bit vs. Byte",
+          "back": "A bit is the smallest unit of data (0 or 1), while a byte consists of 8 bits.",
+          "tier": "reviewing",
+          "streak": 1
+        },
+        {
+          "front": "Nibble vs. Word",
+          "back": "A nibble is a group of 4 bits, while a word is a fixed-sized group of bits handled as a unit by the processor.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Memory Capacity Units (KB, MB, GB, TB, PB, EB)",
+          "back": "Hierarchical units of digital data storage where each level is typically a multiple of 1024 of the previous unit, starting from Kilobytes up to Exabytes.",
+          "tier": "reviewing",
+          "streak": 1
+        },
+        {
+          "front": "RAM vs. ROM",
+          "back": "RAM is volatile memory that loses data when power is off, whereas ROM is non-volatile memory that retains data without power.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Main Memory vs. Secondary Memory",
+          "back": "Main memory is directly accessible by the CPU for immediate processing, while secondary memory is used for long-term, non-volatile data storage.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "System Software",
+          "back": "A category of software designed to provide a platform for other software to run, including operating systems and language processors.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Application Software",
+          "back": "Programs designed to perform specific tasks for the user, categorized into general-purpose and custom software.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Language Processors",
+          "back": "Software that translates programming code into machine-readable language; the three types are Assemblers, Compilers, and Interpreters.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "System Utilities",
+          "back": "Software tools designed to help analyze, configure, optimize, or maintain a computer system.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Operating System (OS)",
+          "back": "System software that manages computer hardware, software resources, and provides common services for computer programs.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Objectives of an Operating System",
+          "back": "To manage system resources, provide a user interface, and ensure efficient execution of programs.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "OS User Interfaces",
+          "back": "The methods by which a user interacts with an operating system, such as Command Line Interface (CLI) or Graphical User Interface (GUI).",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "Functions of an Operating System",
+          "back": "Key tasks include process management, memory management, file management, device management, and security management.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "RAM Construction",
+          "back": "RAM is typically made up of transistors and capacitors, which require power to maintain the stored information.",
+          "tier": "learning",
+          "streak": 0
+        },
+        {
+          "front": "ROM Construction",
+          "back": "ROM is typically made up of flip-flops or similar logic gates that retain state without the need for constant power.",
+          "tier": "learning",
+          "streak": 0
+        }
+      ],
+      "study_guide": "## Computer System and Organization Study Guide\n\nThis guide covers the fundamental concepts of computer architecture, memory, software, and operating systems as outlined in the Computer Science curriculum.\n\n### Basic Computer Organization\nThe computer system is structured to process data through specific functional units.\n\n- **Block Diagram Components**: The basic organization includes Input Units, the Central Processing Unit (CPU) consisting of the Arithmetic Logic Unit (ALU), Control Unit (CU), and Memory Unit (MU), and Output Units.\n- **Input Devices**: Hardware used to provide data and control signals to the computer (e.g., keyboard, mouse).\n- **Output Devices**: Hardware used to communicate the results of data processing to the user (e.g., monitor, printer).\n- **ALU (Arithmetic Logic Unit)**: Performs all mathematical calculations and logical operations.\n- **CU (Control Unit)**: Guides the interpretation, flow, and manipulation of all data and information within the system.\n- **MU (Memory Unit)**: Stores data and instructions for processing.\n- **Registers**: Small, high-speed storage units within the CPU used to hold data temporarily during processing.\n\n### Data Representation and Memory\nComputer memory is measured in specific units and categorized by its volatility and storage capacity.\n\n- **Units of Measurement**:\n    - **Bit**: The smallest unit of data.\n    - **Byte**: A group of 8 bits.\n    - **Nibble**: A group of 4 bits.\n    - **Word**: A fixed-sized piece of data handled as a unit by the processor.\n    - **KB (Kilobyte) and MB (Megabyte)**: 1 MB = 1024 KB.\n    - **GB (Gigabyte) and TB (Terabyte)**: 1 TB = 1024 GB.\n    - **PB (Petabyte) and EB (Exabyte)**: 1 EB = 1024 PB.\n- **RAM vs. ROM**:\n    - **RAM (Random Access Memory)**: Volatile memory that loses data when power is off.\n    - **ROM (Read-Only Memory)**: Non-volatile memory that retains data without power.\n- **Memory Types**:\n    - **Main Memory**: Directly accessible by the CPU; includes RAM and ROM.\n    - **Secondary Memory**: Non-volatile, long-term storage used for data persistence.\n- **Hardware Structure**:\n    - **RAM** is typically made of transistors and capacitors.\n    - **Registers** are made of flip-flops.\n\n### Software Categories\nSoftware is classified based on its purpose and interaction with the hardware.\n\n- **System Software**: Programs that manage the computer hardware and provide a platform for application software.\n- **Application Software**: Programs designed to perform specific tasks for the user.\n- **Language Processors**: Tools that translate programming code into machine-readable language. The three main types are Assemblers, Compilers, and Interpreters.\n- **General-Purpose Application Software**: Common categories include word processors, spreadsheets, and database management systems.\n- **System Utilities**: Specialized programs designed to help analyze, configure, optimize, or maintain a computer system.\n\n### Operating Systems (OS)\nThe Operating System acts as an interface between the user and the computer hardware.\n\n- **Objectives**: To manage resources, provide a user interface, and ensure efficient system operation.\n- **User Interface Types**: Various methods by which users interact with the OS (e.g., Command Line, Graphical User Interface).\n- **Functions of an OS**:\n    - Process management\n    - Memory management\n    - File management\n    - Device management\n    - Security and access control",
+      "summary": "## Executive Summary\nThis worksheet provides a foundational overview of computer system organization, covering the functional components of hardware and the classification of software. It emphasizes the structural relationship between processing units, memory types, and the essential role of operating systems in managing computer resources.\n\n## Key Takeaways\n- **Computer Organization**: The system functions through a cycle of input, processing (via the **ALU** and **CU**), and output, supported by memory units and registers.\n- **Memory Hierarchy**: Distinctions exist between **RAM** (volatile) and **ROM** (non-volatile), as well as between primary main memory and secondary storage.\n- **Data Representation**: Data is measured in hierarchical units ranging from bits and bytes to larger scales like Terabytes (TB), Petabytes (PB), and Exabytes (EB).\n- **Software Categories**: Software is divided into **System Software** (including operating systems and utilities) and **Application Software** (general-purpose tools).\n- **Language Processors**: These are essential tools that translate high-level programming code into machine-readable instructions.\n- **Operating Systems (OS)**: The OS acts as the core interface and manager of system resources, performing critical functions to ensure hardware and software coordination.\n\n## Essential Glossary\n- **ALU (Arithmetic Logic Unit)**: The component of the CPU responsible for performing mathematical calculations and logical operations.\n- **CU (Control Unit)**: The \"brain\" of the processor that directs the flow of data and coordinates the activities of all other hardware components.\n- **Registers**: Small, high-speed storage locations within the CPU used to hold data, instructions, or memory addresses currently being processed.\n- **System Software**: Programs that manage the computer hardware and provide a platform for running application software, such as operating systems and utilities.\n- **Language Processors**: Software tools (like compilers or interpreters) that translate source code written in high-level languages into machine code."
+    },
+    {
+      "id": "kit_ef070192",
+      "name": "Boolean Algebra Fundamentals",
+      "color": "#007aff",
+      "files": [
+        "storage\\6504447-Class XI-A CS-WS3-boolean _1__4217.md",
+        "storage\\6948899-Class XI-A CS-WS1-computer system _1__6d30.md"
+      ],
+      "category": "COMPUTER SCIENCE - CLASS XI",
+      "summary": "## Executive Summary\nThis material covers the foundational principles of Computer Science for Class XI, focusing on Boolean Algebra and Computer System Organization. It provides a structured approach to mastering logic circuit design, Boolean simplification laws, and the architectural components that define modern computing systems.\n\n## Key Takeaways\n- **Boolean Algebra**: Students must demonstrate proficiency in proving Boolean laws (such as absorption and distributive laws) and De Morgan’s Theorems using truth tables.\n- **Circuit Logic**: The curriculum requires the ability to translate between Boolean algebraic expressions and their corresponding visual logic gate circuits.\n- **Computer Architecture**: Understanding the basic block diagram of a computer is essential, specifically the interaction between the Arithmetic Logic Unit (ALU), Control Unit (CU), and Memory Units (MU).\n- **Memory Hierarchy**: Critical distinctions exist between primary memory (RAM/ROM) and secondary storage, as well as the volatility and physical composition of these components.\n- **Software Categorization**: Systems are divided into System Software (including language processors and utilities) and Application Software, managed by an Operating System (OS).\n- **Data Measurement**: Mastery of binary data units is required, ranging from bits and nibbles to larger scales like Petabytes (PB) and Exabytes (EB).\n\n## Essential Glossary\n- **Boolean Algebra**: A mathematical system used for the analysis and simplification of digital logic circuits using binary variables.\n- **Arithmetic Logic Unit (ALU)**: The part of the CPU that performs all mathematical calculations and logical operations.\n- **Language Processors**: Software tools (such as compilers, interpreters, and assemblers) used to translate high-level programming code into machine-readable instructions.\n- **Volatile Memory**: A type of storage, such as RAM, that requires power to maintain the stored information; data is lost when power is removed.\n- **Operating System (OS)**: The core system software that manages computer hardware, software resources, and provides common services for computer programs.",
+      "study_guide": "## Boolean Algebra\nThis section covers the fundamental principles of logic gates, Boolean laws, and circuit analysis.\n\n### Boolean Laws and Theorems\n- **Boolean Laws to Prove via Truth Table:**\n    - Absorption Law: $X + XY = X$\n    - Redundancy Law: $X + X'Y = X + Y$\n    - Distributive Law: $X + YZ = (X + Y)(X + Z)$\n- **De Morgan's Theorems:** These theorems describe the relationship between AND and OR operations through negation. They must be stated and proven using truth tables.\n\n### Logic Circuits and Expressions\n- **Circuit Analysis:** You are expected to convert visual logic gate diagrams into their corresponding Boolean expressions and vice versa.\n- **Expression Examples for Circuit Drawing:**\n    - $y = A.C + B.C' + A'.B.C$\n    - $Q = A.B + B.C.(B+C)$\n    - $y = (A+C).(B+C').(A'+B+C)$\n    - $F = A'.B.C.(A+D)'$\n    - $F = A.B' + C'.D$\n    - $F = (U.V') + (U'.W')$\n    - $F = A.B + A.C' + B'.A'.C$\n    - $F = (X+Y).(X'+Z').(Y+Z)$\n\n## Computer System and Organization\nThis section explores the architecture, memory hierarchy, and software components of a computer system.\n\n### Basic Computer Organization\n- **Block Diagram:** Understand the structural layout of the basic computer organization.\n- **Hardware Components:**\n    - **Input Devices:** Hardware used to provide data to the computer.\n    - **Output Devices:** Hardware used to display or output processed data.\n    - **Arithmetic Logic Unit (ALU):** Performs mathematical and logical operations.\n    - **Control Unit (CU):** Guides the flow, interpretation, and manipulation of data.\n    - **Memory Units (MU):** Storage areas for data.\n    - **Registers:** Small, high-speed units of data holding places within the CPU.\n\n### Memory Hierarchy and Data Units\n- **Data Measurement Units:**\n    - **Bit:** The smallest unit of data.\n    - **Byte:** A group of 8 bits.\n    - **Nibble:** A group of 4 bits.\n    - **Word:** A fixed-sized piece of data handled as a unit by the processor.\n    - **Scale:** KB to MB, GB to TB, and PB to EB.\n- **Memory Types:**\n    - **RAM (Random Access Memory):** Volatile memory.\n    - **ROM (Read-Only Memory):** Non-volatile memory.\n    - **RAM vs. ROM:** RAM is made of transistors and capacitors; ROM is made of flip-flops.\n    - **Main Memory vs. Secondary Memory:** Differentiate based on speed, volatility, and storage capacity.\n\n### Software and Operating Systems\n- **Software Categories:**\n    - **System Software:** Programs that manage the computer hardware.\n    - **Application Software:** Programs designed for end-user tasks (General-purpose).\n- **Language Processors:** Tools used to translate code; understand the three primary types.\n- **System Utilities:** Programs designed to help analyze, configure, optimize, or maintain a computer.\n- **Operating System (OS):**\n    - **Definition:** The interface between the user and the computer hardware.\n    - **Objectives:** To manage resources and provide a platform for software.\n    - **Functions:** Resource management, process management, and file management.\n    - **User Interfaces:** Different types of OS interfaces (e.g., CLI, GUI).",
+      "flashcards": [
+        {
+          "front": "Absorption Law (X + XY = X)",
+          "back": "A fundamental Boolean identity stating that adding the product of a variable and another term to the original variable results in the original variable.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "De Morgan's Theorems",
+          "back": "Laws stating that the complement of a sum is the product of the complements, and the complement of a product is the sum of the complements.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Distributive Law (X + YZ)",
+          "back": "A Boolean identity stating that X + YZ is equivalent to (X + Y)(X + Z).",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Basic Computer Organization",
+          "back": "The structural arrangement of a computer system consisting of input units, output units, the CPU (ALU and CU), and memory units.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "ALU (Arithmetic Logic Unit)",
+          "back": "The component of the CPU responsible for performing arithmetic calculations and logical operations on data.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "CU (Control Unit)",
+          "back": "The component of the CPU that guides the interpretation, flow, and manipulation of all data and information within the system.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Bit vs. Byte",
+          "back": "A bit is the smallest unit of data (0 or 1), while a byte is a group of 8 bits.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Nibble vs. Word",
+          "back": "A nibble is a group of 4 bits, while a word is a fixed-sized group of bits handled as a unit by the processor.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "RAM vs. ROM",
+          "back": "RAM is volatile memory used for temporary storage, while ROM is non-volatile memory used for permanent storage.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Main Memory vs. Secondary Memory",
+          "back": "Main memory (RAM/ROM) provides direct access to the CPU, whereas secondary memory provides long-term, non-volatile storage.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "System Software",
+          "back": "Software designed to provide a platform for other software, including operating systems and system utilities.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Application Software",
+          "back": "Programs designed to perform specific tasks for the user, such as general-purpose productivity tools.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Language Processors",
+          "back": "Programs that translate source code written in high-level languages into machine-readable code; the three types are assemblers, compilers, and interpreters.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "System Utilities",
+          "back": "Specialized software programs designed to help analyze, configure, optimize, or maintain a computer system.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Operating System (OS)",
+          "back": "A system software that manages computer hardware, software resources, and provides common services for computer programs.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Registers",
+          "back": "Small, high-speed storage units within the CPU used to hold data or instructions currently being processed.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Volatile vs. Non-volatile Memory",
+          "back": "Volatile memory (like RAM) loses its data when power is turned off, while non-volatile memory (like ROM) retains data without power.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "DRAM vs. SRAM",
+          "back": "DRAM is made up of transistors and capacitors, whereas SRAM is made up of flip-flops.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Storage Capacity Units",
+          "back": "Data units in increasing order: KB, MB, GB, TB, PB, and EB.",
+          "tier": "mastered",
+          "streak": 0
+        },
+        {
+          "front": "Operating System Objectives",
+          "back": "To manage system resources, provide an interface for the user, and ensure efficient execution of applications.",
+          "tier": "mastered",
+          "streak": 0
+        }
+      ]
+    }
+  ]
+}

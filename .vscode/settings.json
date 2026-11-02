@@ -1,0 +1,6 @@
+{
+  "python.languageServer": "Default",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.defaultInterpreterPath": "C:\\Users\\student\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+  "cmake.sourceDirectory": "D:/it talent hunt/black_hole"
+}

@@ -1,0 +1,174 @@
+{
+  "worksheets": [
+    {
+      "path": "2026-2027\\XI\\Computer Science\\HOLIDAY HOMEWORK.md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "HOLIDAY HOMEWORK",
+      "teacher": "KHUSHBU J",
+      "date": "18/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nHoliday Homework, 2026-27\n\nQ.1 Write the below given   programs    in a Record Book.\n\n1.\tWrite a program to input principal, rate and time and calculate simple interest.\n\n2.\tWrite a Python program that reads time in  seconds and print it in form : hours ,mins and seconds.\n\n3.         Write a program to accept a number from the user and display whether it is an even or  odd\n\n4.\tWrite a Python program to input an arithmetic operator and two numbers and perform the\n\n"
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\Flow of control(if-else).md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "Flow of control(if-else)",
+      "teacher": "KHUSHBU J",
+      "date": "04/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWORKSHEET (2026-2027)\n\nQ1. What is the difference between else and elif construct of if statement?\n\nQ2. Write the output of the following if a = 9 :\n\nif (a > 5 and a <=10):\n\nprint(\"Hello\")\n\nelse:\n\nprint(\"Bye\")\n\nQ3. What will be the output of the following code fragment? I) if a = 25 ii) a=12 iii) if a=48 if ( a % 3 = = 0):\n\nif(a % 4 = =0) :\n\nb = a * 10\n\nelse:\n\nif(a%8 = =0):\n\nb = a + 50\n\nelse:\n\nb = a * 20\n\nprint(“Result”, b)\n\nQ4. What is the error in the following "
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\Python fundamentals and Data Handling.md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "Python fundamentals and Data Handling",
+      "teacher": "KHUSHBU J",
+      "date": "04/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWORKSHEET (2026-2027)\n\nWhat is the difference between a keyboard and an identifier?\n\nExplain the different types of literals with examples.\n\nHow can you create multi-line strings in python?\n\nWhat do you understand by the term ‘immutable’ and ‘mutable ‘datatype. Give example.\n\nWhat is the difference between the following statements?\n\nNumber = input (“Enter a Number? “)\n\nNumber = int (input (“Enter a Number? “)\n\nWhat will be the output of following code? x, y = 25, "
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\WS1-computer system.md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "WS1-computer system",
+      "teacher": "KHUSHBU J",
+      "date": "20/Apr/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWORKSHEET (2026-2027)\n\nQI. Answer the following questions:\n\nWith a help of block diagram explain Basic computer organization.\n\nGive suitable examples for:\n\nInput devices\tii. Output devices\n\nExplain the function of:\n\nALU\tii. CU\tiii. MU\tiv. Registers\n\nDifferentiate between\n\nBit and Byte ii. Nibble and word iii. KB and MB\tiv.GB and TB\tv. PB and EB\n\nWhat is the difference between RAM and ROM?\n\nHow main memory is different from secondary memory?\n\nExplain the two catego"
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\WS2-number system.md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "WS2-number system",
+      "teacher": "KHUSHBU J",
+      "date": "20/Apr/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWORKSHEET (2026-2027)\n\n(490)10 = ( \t) 2\n\n(1 1 1 0 1 1 )2 = ( \t)10\n\n(678)8 = ( \t)10\n\n(3465)10 = ( \t)8\n\n(268)10 = ( \t)16\n\n(9BE8)16 = (\t)10\n\n(1100111010)2 = ( \t)8\n\n(1 0 1 1 1 1 0 0 1 0 1 0 1 1 0)2 =\t(\t) 16\n\n(6325)8 = ( \t)2\n\n(C4D9)16 = (\t)2\n\n(634)10 = ( \t)2\n\n(525)8 = ( \t)10\n\n(345)10 = ( \t)2\n\n(10101101111)2 = (\t)8\n\n(11100101101011)2 = ( \t)16\n\n(B3D8) 16\t=\t(\t) 8\n\n(7324) 8 =\t( \t) 16\n\nClass: XI Comp. Sci. | Department: Computer Science | Date of submission:23.04.26\n\nWorksh"
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\WS3-boolean.md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "WS3-boolean",
+      "teacher": "KHUSHBU J",
+      "date": "20/Apr/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWorksheet 2026-2027\n\n1.  Prove the Boolean Laws shown below using Truth Table.\n\n1.  X+ X’Y = X + Y\n\n2.  X + XY = X\n\n3. X+ Y Z = ( X + Y ) ( X + Z)\n\n2.  State and prove De Morgan's Theorems using truth table\n\n3. Convert the following logic gate circuit into a Boolean expression. (Write the Boolean expression for the given circuits)\n\n1.\n\n2\n\n3.\n\n4.\n\nDraw Logic circuit for y = A.C + B.C’ + A’.B.C\n\nDraw Boolean Logical Circuit from the given Boolean\n\nexpression: Q = A."
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\HOLIDAY HOMEWORK.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "HOLIDAY HOMEWORK",
+      "teacher": "ANILA",
+      "date": "17/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nHoliday Homework Worksheet, 2026-27\n\nClass: XII (CS) | SUB: COMPUTER SCIENCE | Date of Completion:\n26/07/2026\n\nExecute programs on Python editor | TOPIC: PRACTICAL QUESTIONS | Note:  Programs to be written in the record book\n\n1 | Write a python program using function to pass list to a function and double the odd values and half even values of a list and display list element after changing.\n\n2 | Write a Python program input n numbers in tuple and count how many eve"
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\DATA FILES,BINARY FILES.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "DATA FILES,BINARY FILES",
+      "teacher": "ANILA",
+      "date": "03/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWorksheet (2026-27)\n\nClass: XII Comp. Sci. | Department: Computer Science | Execute these questions in Lab\n\nWorksheet No: 4 | Topic: Data Files – BINARY  FILES | Note: Revise them at home too\n\n1 | A binary file “Book.dat” has structure [BookNo, Book_Name, Author, Price].\nWrite a user defined function CreateFile() to input data for a record and add to Book.dat .\nWrite a function CountRec(Author) in Python which accepts the Author name as parameter and count and ret"
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\Worksheet 2_EXCEPTION HANDLING.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "Worksheet 2_EXCEPTION HANDLING",
+      "teacher": "ANILA",
+      "date": "22/Apr/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWorksheet, 2026-27\n\nClass: XII Comp. Sci. | Department: Computer Science | Try out during Laboratory session\n\nWorksheet No: 2 | Topic: EXCEPTION HANDLING | Note: To be solved in the notebook\n\n1 | Which type of error occurs when the rules of the programming language are not followed?\n\n a) Logical Error b) Runtime Error c) Syntax Error d) Exception\n\n2 | What is a Python object that represents an error during program execution called?\n\n a) A bug b) An Exception c) A "
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\Worksheet 3_DATA FILES- TEXT FILES.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "Worksheet 3_DATA FILES- TEXT FILES",
+      "teacher": "ANILA",
+      "date": "22/Apr/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWorksheet, 2026-27\n\nClass: XII Comp. Sci. | Department: Computer Science | Try all the coding in laboratory\n\nWorksheet No: 3 | Topic: Data Files – TEXT FILES | Note: Write in your class note book.\n\n1 | Give one difference between Text file and Binary File\n\n2 | Write a Python statement to open a text file “DATA.TXT” so that new contents can be written on it.\n\n3 | Write a Python statement to open a text file “DATA.TXT” so that new content can be\nadded to the end of "
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\Python Functions.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "Python Functions",
+      "teacher": "ANILA",
+      "date": "26/Mar/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWorksheet, 2026-27\n\nClass: XII Comp. Sci. | Department: Computer Science | \n\nWorksheet No: 1 | Topic: Functions | Note: To be solved in the notebook\n\n1 | Function name must be followed by\n\n2 | keyword is used to define a function\n\n3 | Function will perform its action only when it is\n\n4 | Write statement to call the function. def Add():\nX = 10 + 20\nprint(X)\n\t #statement to call the above function\n\n5 | Write statement to call the function. def Add(X,Y):\nZ = X+Y\nprin"
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\HOLIDAY HOMEWORK.md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "HOLIDAY HOMEWORK",
+      "teacher": "KHUSHBU J",
+      "date": "18/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nHoliday Homework, 2026-27\n\nQ.1 Write the below given   programs    in a Record Book.\n\n1.\tWrite a program to input principal, rate and time and calculate simple interest.\n\n2.\tWrite a Python program that reads time in  seconds and print it in form : hours ,mins and seconds.\n\n3.         Write a program to accept a number from the user and display whether it is an even or  odd\n\n4.\tWrite a Python program to input an arithmetic operator and two numbers and perform the\n\n"
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\Flow of control(if-else).md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "Flow of control(if-else)",
+      "teacher": "KHUSHBU J",
+      "date": "04/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWORKSHEET (2026-2027)\n\nQ1. What is the difference between else and elif construct of if statement?\n\nQ2. Write the output of the following if a = 9 :\n\nif (a > 5 and a <=10):\n\nprint(\"Hello\")\n\nelse:\n\nprint(\"Bye\")\n\nQ3. What will be the output of the following code fragment? I) if a = 25 ii) a=12 iii) if a=48 if ( a % 3 = = 0):\n\nif(a % 4 = =0) :\n\nb = a * 10\n\nelse:\n\nif(a%8 = =0):\n\nb = a + 50\n\nelse:\n\nb = a * 20\n\nprint(“Result”, b)\n\nQ4. What is the error in the following "
+    },
+    {
+      "path": "2026-2027\\XI\\Computer Science\\Python fundamentals and Data Handling.md",
+      "year": "2026-2027",
+      "class": "XI",
+      "subject": "Computer Science",
+      "title": "Python fundamentals and Data Handling",
+      "teacher": "KHUSHBU J",
+      "date": "04/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWORKSHEET (2026-2027)\n\nWhat is the difference between a keyboard and an identifier?\n\nExplain the different types of literals with examples.\n\nHow can you create multi-line strings in python?\n\nWhat do you understand by the term ‘immutable’ and ‘mutable ‘datatype. Give example.\n\nWhat is the difference between the following statements?\n\nNumber = input (“Enter a Number? “)\n\nNumber = int (input (“Enter a Number? “)\n\nWhat will be the output of following code? x, y = 25, "
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\HOLIDAY HOMEWORK.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "HOLIDAY HOMEWORK",
+      "teacher": "ANILA",
+      "date": "17/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nHoliday Homework Worksheet, 2026-27\n\nClass: XII (CS) | SUB: COMPUTER SCIENCE | Date of Completion:\n26/07/2026\n\nExecute programs on Python editor | TOPIC: PRACTICAL QUESTIONS | Note:  Programs to be written in the record book\n\n1 | Write a python program using function to pass list to a function and double the odd values and half even values of a list and display list element after changing.\n\n2 | Write a Python program input n numbers in tuple and count how many eve"
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\DATA FILES,BINARY FILES.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "DATA FILES,BINARY FILES",
+      "teacher": "ANILA",
+      "date": "03/May/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWorksheet (2026-27)\n\nClass: XII Comp. Sci. | Department: Computer Science | Execute these questions in Lab\n\nWorksheet No: 4 | Topic: Data Files – BINARY  FILES | Note: Revise them at home too\n\n1 | A binary file “Book.dat” has structure [BookNo, Book_Name, Author, Price].\nWrite a user defined function CreateFile() to input data for a record and add to Book.dat .\nWrite a function CountRec(Author) in Python which accepts the Author name as parameter and count and ret"
+    },
+    {
+      "path": "2026-2027\\XII\\Computer Science\\Worksheet 2_EXCEPTION HANDLING.md",
+      "year": "2026-2027",
+      "class": "XII",
+      "subject": "Computer Science",
+      "title": "Worksheet 2_EXCEPTION HANDLING",
+      "teacher": "ANILA",
+      "date": "22/Apr/2026",
+      "text_preview": "INDIAN SCHOOL AL WADI AL KABIR\n\nWorksheet, 2026-27\n\nClass: XII Comp. Sci. | Department: Computer Science | Try out during Laboratory session\n\nWorksheet No: 2 | Topic: EXCEPTION HANDLING | Note: To be solved in the notebook\n\n1 | Which type of error occurs when the rules of the programming language are not followed?\n\n a) Logical Error b) Runtime Error c) Syntax Error d) Exception\n\n2 | What is a Python object that represents an error during program execution called?\n\n a) A bug b) An Exception c) A "
+    }
+  ]
+}

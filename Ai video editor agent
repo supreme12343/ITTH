@@ -1,0 +1,115 @@
+#using a file-based bridge so AE can poll without needing HTTP sockets
+#Python writes JSX command files into a bridge folder
+#AE's AI Live Receiver.jsx picks them up via app.scheduleTask and executes them
+from video_editing_agent import VideoEditingAgent
+import tkinter as tk
+from tkinter import scrolledtext
+
+
+class AgentGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("AI Video Editing Agent (Live Mode)")
+        self.root.geometry("700x500")
+        self.root.configure(bg="#181825")
+
+        self.agent = VideoEditingAgent()
+        self.agent.set_log_callback(self._log)
+
+        self._setup_ui()
+        self._start()
+
+    def _start(self):
+        ok = self.agent.start_server()
+        if ok:
+            self._log(f"Bridge folder: {self.agent.bridge_dir}")
+            self._log("Open AI Live Receiver in After Effects (Window menu or run the .jsx).")
+            self._log("Preferences > Scripting & Expressions > Allow Scripts to Write Files and Access Network must be ON.")
+        else:
+            self._log("ERROR: Could not start bridge. Check permissions on the TEMP folder.")
+
+    def _setup_ui(self):
+        tk.Label(
+            self.root,
+            text="AI Video Editor Agent",
+            font=("Helvetica", 14, "bold"),
+            fg="#cdd6f4", bg="#181825"
+        ).pack(anchor="w", padx=20, pady=(20, 2))
+
+        tk.Label(
+            self.root,
+            text="Commands: add text <words> | glow | color grade | blur | fade | render",
+            font=("Helvetica", 9),
+            fg="#a6adc8", bg="#181825"
+        ).pack(anchor="w", padx=20, pady=(0, 8))
+
+        input_frame = tk.Frame(self.root, bg="#181825")
+        input_frame.pack(fill=tk.X, padx=20, pady=5)
+
+        self.entry = tk.Entry(
+            input_frame,
+            font=("Helvetica", 11),
+            bg="#313244", fg="#cdd6f4",
+            insertbackground="#cdd6f4",
+            relief="flat"
+        )
+        self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=8, padx=(0, 10))
+        self.entry.bind("<Return>", lambda e: self._process_command())
+        self.entry.focus_set()
+
+        tk.Button(
+            input_frame,
+            text="Execute Live",
+            command=self._process_command,
+            bg="#a6e3a1", fg="#11111b",
+            font=("Helvetica", 10, "bold"),
+            relief="flat", padx=15, pady=4
+        ).pack(side=tk.RIGHT)
+
+        status_frame = tk.Frame(self.root, bg="#181825")
+        status_frame.pack(fill=tk.X, padx=20)
+
+        tk.Label(status_frame, text="Bridge: ", fg="#a6adc8", bg="#181825",
+                 font=("Consolas", 9)).pack(side=tk.LEFT)
+        self.bridge_label = tk.Label(
+            status_frame, text="starting...",
+            fg="#89dceb", bg="#181825", font=("Consolas", 9)
+        )
+        self.bridge_label.pack(side=tk.LEFT)
+
+        self.console = scrolledtext.ScrolledText(
+            self.root,
+            bg="#11111b", fg="#a6e3a1",
+            font=("Consolas", 10),
+            relief="flat", state="normal"
+        )
+        self.console.pack(fill=tk.BOTH, expand=True, padx=20, pady=(8, 20))
+        self._log("Ready. Type a prompt and press Enter or click Execute Live.")
+
+    def _log(self, text):
+        self.console.insert(tk.END, f"> {text}\n")
+        self.console.see(tk.END)
+        if hasattr(self, "bridge_label"):
+            self.bridge_label.config(text=str(self.agent.bridge_dir))
+
+    def _process_command(self):
+        prompt = self.entry.get().strip()
+        if not prompt:
+            return
+        self.entry.delete(0, tk.END)
+        jsx = self.agent.send_prompt(prompt)
+        if jsx:
+            self._log(f"Sent: '{prompt}'")
+        else:
+            self._log("Nothing to send (empty prompt).")
+
+    def on_close(self):
+        self.agent.stop_server()
+        self.root.destroy()
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = AgentGUI(root)
+    root.protocol("WM_DELETE_WINDOW", app.on_close)
+    root.mainloop()

@@ -1,0 +1,14 @@
+# Local, user-specific activity history. The app creates this automatically.
+storage/unified_memory.json
+storage/research/
+ai-agent-overlay/node_modules/
+ai-agent-overlay/dist/
+logs/campus-suite-desktop.log
+
+# Local environment secrets
+.env
+.env.*
+!.env.example
+
+# Local HTTPS private key
+/key.pem

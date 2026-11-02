@@ -1,0 +1,178 @@
+import os
+import sys
+import threading
+import subprocess
+import re
+import ast
+import json
+import tkinter as tk
+from tkinter import ttk, scrolledtext
+
+
+def clean_agent_output(raw_text):
+    if not raw_text:
+        return ""
+
+    # Remove ANSI escape codes
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    cleaned = ansi_escape.sub('', raw_text).strip()
+
+    # Filter out LangChain execution lines
+    lines = [line for line in cleaned.splitlines() if "Entering new" not in line and "Finished chain" not in line]
+    cleaned = "\n".join(lines).strip()
+
+    # Extract JSON or dictionary structures if present
+    try:
+        parsed_obj = ast.literal_eval(cleaned)
+        if isinstance(parsed_obj, list) and len(parsed_obj) > 0:
+            parsed_obj = parsed_obj[0]
+        if isinstance(parsed_obj, dict):
+            target_data = parsed_obj.get('output') or parsed_obj.get('text') or parsed_obj
+            if isinstance(target_data, list) and len(target_data) > 0:
+                target_data = target_data[0]
+            if isinstance(target_data, dict):
+                inner_text = target_data.get('text', '')
+                if isinstance(inner_text, str) and inner_text.startswith('{'):
+                    try:
+                        json_data = json.loads(inner_text)
+                        if isinstance(json_data, dict) and 'summary' in json_data:
+                            return json_data['summary']
+                    except Exception:
+                        pass
+                if inner_text:
+                    return inner_text
+            if 'summary' in parsed_obj:
+                return parsed_obj['summary']
+    except Exception:
+        pass
+
+    summary_match = re.search(r'"summary":\s*"([^"]+)"', cleaned)
+    if summary_match:
+        return summary_match.group(1)
+
+    return cleaned
+
+
+def invoke_main_agent(prompt):
+    try:
+        main_path = os.path.join(os.path.dirname(__file__), "main.py")
+        if not os.path.exists(main_path):
+            return f"Error: 'main.py' not found at {main_path}"
+
+        env = os.environ.copy()
+        env["QUERY"] = prompt
+        env["PROMPT"] = prompt
+        env["INPUT"] = prompt
+        env["USER_PROMPT"] = prompt
+
+        # Run main.py as a clean isolated subprocess and send prompt to stdin & CLI
+        process = subprocess.run(
+            [sys.executable, main_path, prompt],
+            input=prompt + "\n",
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=30
+        )
+
+        raw_output = process.stdout.strip() or process.stderr.strip()
+        return clean_agent_output(raw_output)
+
+    except Exception as e:
+        return f"Agent Error: {str(e)}"
+
+
+class CodeDebuggerApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("AI Code Bug Debugger & Syntax Assistant")
+        self.root.geometry("900x700")
+
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        self.root.configure(bg="#1E1E2E")
+        self.style.configure(".", background="#1E1E2E", foreground="#CDD6F4", font=("Segoe UI", 10))
+        self.style.configure("Card.TFrame", background="#2B2B3D")
+        self.style.configure("Header.TLabel", font=("Segoe UI", 15, "bold"), foreground="#7AA2F7")
+        self.style.configure("Action.TButton", font=("Segoe UI", 10, "bold"), background="#7AA2F7",
+                             foreground="#11111B")
+
+        self.build_ui()
+
+    def build_ui(self):
+        ttk.Label(self.root, text="💻 Code Debugger & Programming Tutor", style="Header.TLabel").pack(anchor="w",
+                                                                                                     padx=20, pady=10)
+
+        main_box = ttk.Frame(self.root)
+        main_box.pack(fill="both", expand=True, padx=20, pady=5)
+
+        # 1. TOP PANEL: Raw Code / Syntax Error Input Box (30% Height Ratio)
+        top_frame = ttk.Frame(main_box, style="Card.TFrame", padding=10)
+        top_frame.pack(fill="x", pady=(0, 5))
+
+        ttk.Label(top_frame, text="Raw Code / Error Traceback (Paste Snippet Below):", font=("Segoe UI", 9, "bold"),
+                  background="#2B2B3D").pack(anchor="w", pady=(0, 2))
+        self.left_code = scrolledtext.ScrolledText(top_frame, bg="#181825", fg="#CDD6F4", font=("Consolas", 10),
+                                                   insertbackground="white", relief="flat", height=6)
+        self.left_code.pack(fill="x", expand=False)
+
+        # 2. BOTTOM PANEL: AI Output Explanation Dialog (70% Height Ratio)
+        bottom_frame = ttk.Frame(main_box, style="Card.TFrame", padding=10)
+        bottom_frame.pack(fill="both", expand=True, pady=(5, 0))
+
+        ttk.Label(bottom_frame, text="Fixed Code & AI Tutor Explanation:", font=("Segoe UI", 10, "bold"),
+                  background="#2B2B3D").pack(anchor="w", pady=(0, 5))
+        self.right_out = scrolledtext.ScrolledText(bottom_frame, bg="#181825", fg="#89B4FA", font=("Consolas", 10),
+                                                   wrap="word", relief="flat")
+        self.right_out.pack(fill="both", expand=True)
+
+        # Bottom Command Entry Bar
+        bot_frame = ttk.Frame(self.root, style="Card.TFrame", padding=10)
+        bot_frame.pack(fill="x", padx=20, pady=10)
+
+        self.cmd_entry = tk.Entry(bot_frame, bg="#181825", fg="#CDD6F4", insertbackground="white", relief="flat",
+                                  font=("Segoe UI", 10))
+        self.cmd_entry.pack(side="left", fill="x", expand=True, ipady=6, padx=(0, 10))
+        self.cmd_entry.insert(0, "Ask a specific debugging question or press Debug Code...")
+        self.cmd_entry.bind("<FocusIn>", lambda e: self.cmd_entry.delete(0,
+                                                                         "end") if "Ask a specific" in self.cmd_entry.get() else None)
+        self.cmd_entry.bind("<Return>", lambda e: self.start_debug())
+
+        ttk.Button(bot_frame, text="🐞 Debug Code", command=self.start_debug, style="Action.TButton").pack(side="right")
+
+    def start_debug(self):
+        code_input = self.left_code.get("1.0", "end").strip()
+        user_msg = self.cmd_entry.get().strip()
+
+        combined_prompt = f"Fix and explain this Python code snippet:\n{code_input}\n\nQuestion: {user_msg}" if code_input else user_msg
+        if not combined_prompt or "Ask a specific" in combined_prompt:
+            return
+
+        code_keywords = ["def", "class", "import", "error", "traceback", "print", "bug", "syntax", "indentation",
+                         "python", "code", "loop", "return", "function", "variable"]
+        is_topic_valid = any(kw in combined_prompt.lower() for kw in code_keywords)
+
+        if not is_topic_valid:
+            self.right_out.delete("1.0", "end")
+            self.right_out.insert("end",
+                                  "⚠️ Topic Guard Alert:\nI can only assist you with coding, syntax errors, and program debugging. I cannot help with unrelated topics.")
+            return
+
+        self.right_out.delete("1.0", "end")
+        self.right_out.insert("end", "Analyzing code & syntax errors...")
+
+        threading.Thread(target=self.run_ai, args=(combined_prompt,), daemon=True).start()
+
+    def run_ai(self, prompt):
+        res = invoke_main_agent(prompt)
+        self.root.after(0, self.update_output, res)
+
+    def update_output(self, res):
+        self.right_out.delete("1.0", "end")
+        self.right_out.insert("end", res)
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = CodeDebuggerApp(root)
+    root.mainloop()

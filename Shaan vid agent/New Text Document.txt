@@ -1,0 +1,65 @@
+// AI Assistant Native Panel for AE 2020
+(function(thisObj) {
+    function buildUI(thisObj) {
+        var win = (thisObj instanceof Panel) ? thisObj : new Window("palette", "AI Assistant", undefined, {resizeable: true});
+        win.orientation = "column";
+        win.alignChildren = ["fill", "top"];
+
+        var inputGroup = win.add("group");
+        inputGroup.orientation = "row";
+        var txtPrompt = inputGroup.add("edittext", undefined, "glow text");
+        txtPrompt.alignment = ["fill", "center"];
+        var btnRun = inputGroup.add("button", undefined, "Execute");
+
+        btnRun.onClick = function() {
+            var prompt = txtPrompt.text.toLowerCase();
+            var comp = app.project.activeItem;
+            
+            if (!comp || !(comp instanceof CompItem)) {
+                alert("Please click on an active Composition timeline first!");
+                return;
+            }
+
+            app.beginUndoGroup("AI Action");
+
+            // 1. ADD TEXT
+            if (prompt.indexOf("text") !== -1 || prompt.indexOf("title") !== -1) {
+                var txt = comp.layers.addText(txtPrompt.text);
+                txt.property("Position").setValue([comp.width/2, comp.height/2]);
+            } 
+            // 2. APPLY GLOW
+            else if (prompt.indexOf("glow") !== -1 || prompt.indexOf("shine") !== -1) {
+                if (comp.selectedLayers.length > 0) {
+                    for (var i = 0; i < comp.selectedLayers.length; i++) {
+                        comp.selectedLayers[i].property("Effects").addProperty("ADBE Glow");
+                    }
+                } else {
+                    var adj = comp.layers.addSolid([1,1,1], "AI_Glow", comp.width, comp.height, comp.pixelAspect, comp.duration);
+                    adj.adjustmentLayer = true;
+                    adj.property("Effects").addProperty("ADBE Glow");
+                }
+            } 
+            // 3. COLOR GRADE
+            else if (prompt.indexOf("color") !== -1 || prompt.indexOf("grade") !== -1) {
+                var colorAdj = comp.layers.addSolid([1,1,1], "AI_Color_Grade", comp.width, comp.height, comp.pixelAspect, comp.duration);
+                colorAdj.adjustmentLayer = true;
+                colorAdj.property("Effects").addProperty("ADBE Curves");
+            } 
+            // 4. RENDER QUEUE
+            else if (prompt.indexOf("render") !== -1 || prompt.indexOf("export") !== -1) {
+                app.project.renderQueue.items.add(comp);
+            }
+
+            app.endUndoGroup();
+        };
+
+        win.layout.layout(true);
+        return win;
+    }
+
+    var myPanel = buildUI(thisObj);
+    if (myPanel instanceof Window) {
+        myPanel.center();
+        myPanel.show();
+    }
+})(this);

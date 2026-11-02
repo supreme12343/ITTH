@@ -1,0 +1,27 @@
+{
+  "name": "campus-suite-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --config \"../campus ui components/vite.config.ts\"",
+    "build": "tsc -b \"../campus ui components/tsconfig.json\" && vite build --config \"../campus ui components/vite.config.ts\"",
+    "prepare-ui": "node electron/start.cjs --prepare-only",
+    "test:launcher": "node --test electron/main.test.cjs electron/start.test.cjs electron/dev-server.test.cjs",
+    "desktop:dev": "electron electron/main.cjs --dev",
+    "start": "node electron/start.cjs"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "electron": "^44.5.1",
+    "typescript": "^5.2.2",
+    "vite": "^8.3.2"
+  }
+}

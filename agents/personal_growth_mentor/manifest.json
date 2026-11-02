@@ -1,0 +1,10 @@
+{
+  "id": "personal-growth-mentor",
+  "name": "Personal Growth Mentor",
+  "icon": "🌱",
+  "color": "#20a387",
+  "description": "Helps students discover IT strengths and track learning goals; gives teachers practical prompts for supportive mentoring.",
+  "audience": ["students", "teachers"],
+  "inspired_by": "https://github.com/msitarzewski/agency-agents/blob/main/specialized/personal-growth-mentor.md",
+  "tools": ["create_goal", "list_goals", "record_goal_checkin"]
+}

@@ -1,0 +1,34 @@
+{
+  "worktrees": {
+    "wt-1787380806238-1": {
+      "branch": "agents",
+      "path": "i:\\it talent hunt\\.kilo\\worktrees\\agents",
+      "parentBranch": "master",
+      "createdAt": "2026-08-22T06:40:06.238Z",
+      "label": "agents",
+      "branchOwned": true
+    },
+    "wt-1787381538346-2": {
+      "branch": "equal-robin",
+      "path": "i:\\it talent hunt\\.kilo\\worktrees\\equal-robin",
+      "parentBranch": "master",
+      "createdAt": "2026-08-22T06:52:18.346Z",
+      "branchOwned": true
+    }
+  },
+  "sessions": {
+    "ses_fd7cd43bdffecnWfEAXjzfpDg1": {
+      "worktreeId": "wt-1787380806238-1",
+      "createdAt": "2026-08-22T06:40:08.830Z"
+    },
+    "ses_fd7c2100fffe626kGaETmuTtD0": {
+      "worktreeId": "wt-1787381538346-2",
+      "createdAt": "2026-08-22T06:52:36.423Z"
+    }
+  },
+  "worktreeOrder": [
+    "wt-1787380806238-1",
+    "wt-1787381538346-2"
+  ],
+  "sessionsCollapsed": true
+}

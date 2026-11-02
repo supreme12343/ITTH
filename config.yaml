@@ -1,0 +1,115 @@
+# Presentation Controller Configuration
+# Copy to config.yaml and customize, or override via .env
+
+app:
+  name: "Presentation Controller"
+  version: "2.0.0"
+  debug: false
+
+network:
+  python_backend_port: 9005
+  node_frontend_port: 8000
+  udp_audio_port: 5005
+  websocket_port: 9006
+  use_http: false  # true for local dev without certs
+
+paths:
+  thumbnails_dir: "public/thumbnails"
+  decks_dir: "decks"
+  logs_dir: "logs"
+  config_dir: "config"
+  whisper_model_dir: "models/whisper"
+
+powerpoint:
+  com_timeout: 5.0
+  thumbnail_format: "PNG"
+  thumbnail_quality: 90
+  max_slides_cache: 50
+  auto_export_thumbnails: true
+  focus_on_navigate: true
+
+voice:
+  riva:
+    enabled: true
+    api_key: ""           # Set via RIVA_API_KEY env
+    function_id: ""       # Set via RIVA_FUNCTION_ID env
+    server: "grpc.nvcf.nvidia.com:443"
+    sampling_rate: 16000
+    language: "en-US"
+    interim_results: true
+  
+  whisper:
+    enabled: true
+    model: "base.en"      # tiny.en, base.en, small.en, medium.en
+    model_path: ""        # Auto-download if empty
+    threads: 4
+    language: "en"
+    translate: false
+    vad_threshold: 0.5
+    min_silence_ms: 500
+
+ai:
+  gemma:
+    enabled: true
+    api_key: ""           # Set via GEMMA_API_KEY env
+    url: "https://integrate.api.nvidia.com/v1/chat/completions"
+    model: "google/gemma-3n-e2b-it"
+    temperature: 0.1
+    max_tokens: 50
+  
+  nemotron:
+    enabled: true
+    api_key: ""           # Set via NEMOTRON_API_KEY env
+    model: "nvidia/llama-nemotron-rerank-vl-1b-v2"
+    similarity_threshold: 0.65
+    check_interval_sec: 2.0
+    buffer_size: 500
+  
+  embeddings:
+    enabled: true
+    model: "nvidia/nv-embedqa-e5-v5"
+    api_key: ""           # Set via EMBEDDINGS_API_KEY env
+    cache_embeddings: true
+
+annotations:
+  enabled: true
+  colors:
+    - "#FF3B30"   # Red
+    - "#34C759"   # Green
+    - "#007AFF"   # Blue
+    - "#FF9F0A"   # Orange
+    - "#AF52DE"   # Purple
+    - "#FFCC00"   # Yellow
+    - "#FFFFFF"   # White
+    - "#000000"   # Black
+  default_color: "#FF3B30"
+  default_width: 3
+  save_with_deck: true
+  tools:
+    - "pen"
+    - "highlighter"
+    - "eraser"
+    - "laser"
+    - "arrow"
+    - "rectangle"
+    - "circle"
+    - "text"
+
+multi_deck:
+  enabled: true
+  auto_advance: false
+  transition_delay_sec: 1.0
+
+gui:
+  theme: "dark"
+  accent_color: "#6C63FF"
+  font_family: "Inter, system-ui, sans-serif"
+  show_console: true
+  console_max_lines: 1000
+  auto_refresh_interval_ms: 500
+
+logging:
+  level: "INFO"
+  file_rotation: "10 MB"
+  file_retention: "7 days"
+  console_output: true

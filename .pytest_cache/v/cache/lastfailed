@@ -1,0 +1,3 @@
+{
+  "tests/test_key_manager_provider_fallback.py::test_chat_with_role_falls_back_from_configured_omniroute_to_gemini": true
+}

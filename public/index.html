@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <title>Smart PPT Controller | Core</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        /* Shared visual language: one dark foundation with a single sky-blue action colour. */
+        :root {
+            --ui-canvas: #0f172a;
+            --ui-surface: #172033;
+            --ui-surface-hover: #22304a;
+            --ui-border: #334155;
+            --ui-primary: #38bdf8;
+            --ui-primary-hover: #0ea5e9;
+            --ui-primary-active: #0284c7;
+        }
+        body {
+            background-color: var(--ui-canvas);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        button { user-select: none; -webkit-user-select: none; }
+
+        /* Annotation canvas styles */
+        #annotationCanvas {
+            touch-action: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: auto;
+        }
+        .annotation-toolbar {
+            position: absolute;
+            z-index: 201;
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            background: rgba(15, 23, 42, .98);
+            border-radius: 12px;
+            border: 1px solid var(--ui-border);
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
+            max-height: var(--annotation-toolbar-height, calc(100dvh - 24px));
+            height: var(--annotation-toolbar-height, auto);
+            box-sizing: border-box;
+            overflow-x: hidden;
+            overflow-y: auto;
+            left: max(8px, env(safe-area-inset-left));
+            right: max(8px, env(safe-area-inset-right));
+            bottom: max(8px, env(safe-area-inset-bottom));
+            width: auto;
+            transform: none !important;
+            align-content: center;
+        }
+        .annotation-toolbar button {
+            flex: 0 0 auto;
+            width: auto;
+            min-width: 42px;
+            min-height: 38px;
+            height: auto;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: none;
+            background: #22304a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            line-height: 1.1;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .annotation-toolbar button.tool-btn {
+            width: 40px;
+            min-width: 40px;
+            padding: 0;
+            font-size: 17px;
+        }
+        .annotation-toolbar input,
+        .annotation-toolbar #annotationStatus { color: #94a3b8; }
+        .annotation-toolbar #annotationStatus.text-rose-300 { color: #fda4af; }
+        .annotation-toolbar button:hover {
+            background: var(--ui-surface-hover);
+        }
+        .annotation-toolbar button.active {
+            background: var(--ui-primary);
+            color: var(--ui-canvas);
+        }
+        .annotation-toolbar button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .color-picker {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 2px solid var(--ui-border);
+            cursor: pointer;
+            background: none;
+        }
+        .color-picker::-webkit-color-swatch-wrapper { padding: 2px; }
+        .color-picker::-webkit-color-swatch { border-radius: 4px; border: none; }
+        .width-slider {
+            width: 80px;
+            accent-color: var(--ui-primary);
+        }
+        .annotation-text-entry {
+            display: flex;
+            flex: 1 1 100%;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .annotation-text-entry input {
+            flex: 1;
+            min-width: 0;
+            max-width: 320px;
+            padding: 9px 11px;
+            border: 1px solid var(--ui-border);
+            border-radius: 8px;
+            outline: none;
+            background: var(--ui-canvas);
+            color: white;
+            font-size: 14px;
+        }
+        .annotation-text-entry input:focus { border-color: var(--ui-primary); }
+        .slide-list-card {
+            width: 100%;
+            max-width: 1100px;
+            margin-inline: auto;
+            min-width: 0;
+            aspect-ratio: 16 / 9;
+        }
+        .deck-selector {
+            background: var(--ui-surface);
+            border-radius: 12px;
+            border: 1px solid var(--ui-border);
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .deck-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border: 2px solid transparent;
+        }
+        .deck-item:hover {
+            background: var(--ui-surface-hover);
+        }
+        .deck-item.active {
+            border-color: var(--ui-primary);
+            background: var(--ui-canvas);
+        }
+        .deck-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .deck-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .deck-meta {
+            font-size: 11px;
+            color: #888;
+        }
+        .deck-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--ui-primary);
+        }
+        .deck-indicator.inactive {
+            background: var(--ui-border);
+        }
+        .navigation-controls {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background: var(--ui-surface);
+            border-radius: 12px;
+            border: 1px solid var(--ui-border);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--ui-canvas);
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+        .nav-btn:hover {
+            background: var(--ui-surface-hover);
+        }
+        .nav-btn.primary {
+            background: var(--ui-primary);
+            color: var(--ui-canvas);
+        }
+        .nav-btn.primary:hover {
+            background: var(--ui-primary-hover);
+        }
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .slide-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--ui-surface);
+            border-radius: 8px;
+            border: 1px solid var(--ui-border);
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .slide-indicator span {
+            color: var(--ui-primary);
+            font-weight: bold;
+        }
+        .annotation-overlay-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .annotation-overlay-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 1000;
+            background: var(--ui-canvas);
+            --annotation-toolbar-height: clamp(166px, 30dvh, 224px);
+        }
+        #annotationSlideBackground {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: calc(100% - var(--annotation-toolbar-height, 0px));
+            object-fit: contain;
+            pointer-events: none;
+        }
+        #annotationCanvas {
+            bottom: var(--annotation-toolbar-height, 0px);
+            height: calc(100% - var(--annotation-toolbar-height, 0px));
+        }
+        #annotationOverlay.blackout { background: #000; }
+        #annotationOverlay.blackout #annotationSlideBackground,
+        #annotationOverlay.blackout #annotationNoSlide { display: none; }
+        #annotationNoSlide {
+            position: absolute;
+            color: #94a3b8;
+            font: 600 14px ui-monospace, SFMono-Regular, Consolas, monospace;
+            pointer-events: none;
+        }
+        #annotationSlideLabel {
+            position: absolute;
+            z-index: 110;
+            top: calc(12px + env(safe-area-inset-top));
+            left: calc(12px + env(safe-area-inset-left));
+            max-width: calc(100vw - 24px);
+            overflow: hidden;
+            padding: 7px 11px;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, .8);
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .laser-pointer {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff0000 0%, #800000 70%);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+            animation: laserPulse 0.5s ease-in-out infinite alternate;
+            z-index: 200;
+        }
+        @keyframes laserPulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+        }
+        .annotation-stroke-preview {
+            position: absolute;
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        #view-advanced { min-height: 0; }
+        #galleryContainer { min-width: 0; min-height: 0; }
+        #galleryGrid { overscroll-behavior: contain; }
+        #zoomValue { min-width: 82px; text-align: center; white-space: nowrap; }
+        .single-slide-controls { display: none; }
+        #galleryContainer.single-slide-landscape {
+            width: 100%;
+            height: 100%;
+            flex: 1 1 100%;
+        }
+        #galleryContainer.single-slide-landscape #galleryGrid {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            flex: 1 1 100%;
+        }
+        #galleryContainer.single-slide-landscape #advancedNavBar,
+        #galleryContainer.single-slide-landscape #swipeHint,
+        #view-advanced.single-slide-landscape #advanced-toolbar { display: none !important; }
+        #galleryContainer.single-slide-landscape .single-slide-counter { display: none; }
+        body.single-slide-landscape > header { display: none !important; }
+        #galleryContainer.single-slide-landscape #galleryGrid > div { padding: 0 !important; }
+        #galleryContainer.single-slide-landscape .single-slide-controls { display: contents; }
+        .single-slide-action {
+            position: absolute;
+            z-index: 30;
+            min-height: 42px;
+            padding: 0 14px;
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, .92);
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+            box-shadow: 0 4px 18px rgba(0,0,0,.35);
+            backdrop-filter: blur(10px);
+        }
+        .single-slide-nav {
+            position: absolute;
+            z-index: 35;
+            top: 50%;
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 64px;
+            padding: 0;
+            border: 1px solid rgba(255,255,255,.22);
+            border-radius: 14px;
+            background: rgba(15, 23, 42, .88);
+            color: white;
+            font-size: 24px;
+            font-weight: 900;
+            box-shadow: 0 4px 18px rgba(0,0,0,.35);
+            transform: translateY(-50%);
+            touch-action: manipulation;
+        }
+        .single-slide-nav:disabled,
+        .annotation-slide-nav:disabled { opacity: .35; }
+        #singleSlidePrevious { left: max(10px, env(safe-area-inset-left)); }
+        #singleSlideNext { right: max(10px, env(safe-area-inset-right)); }
+        .single-slide-actions {
+            position: absolute;
+            z-index: 30;
+            left: max(12px, env(safe-area-inset-left));
+            bottom: max(12px, env(safe-area-inset-bottom));
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .single-slide-actions .single-slide-action { position: static; }
+        .annotation-slide-nav {
+            position: absolute;
+            z-index: 210;
+            top: 42%;
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 60px;
+            padding: 0;
+            border: 1px solid rgba(255,255,255,.24);
+            border-radius: 14px;
+            background: rgba(15, 23, 42, .86);
+            color: white;
+            font-size: 23px;
+            font-weight: 900;
+            box-shadow: 0 4px 18px rgba(0,0,0,.35);
+            transform: translateY(-50%);
+            touch-action: manipulation;
+        }
+        #annotationPreviousSlide { left: max(10px, env(safe-area-inset-left)); }
+        #annotationNextSlide { right: max(10px, env(safe-area-inset-right)); }
+        #view-advanced:fullscreen,
+        #view-advanced:-webkit-full-screen {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 2000;
+            background: var(--ui-canvas);
+        }
+        #view-advanced:fullscreen .single-slide-controls { display: contents; }
+        #view-advanced:-webkit-full-screen .single-slide-controls { display: contents; }
+        #mobileAnnotateBtn.active { background: var(--ui-primary); color: var(--ui-canvas); }
+
+        @media (orientation: landscape) and (max-height: 600px) {
+            #view-advanced.flex { flex-direction: row; }
+            #view-advanced.single-slide-landscape.flex { flex-direction: column; }
+            #galleryContainer { height: 100%; }
+            #advancedNavBar { padding: 5px; }
+            .navigation-controls { gap: 4px; padding: 5px; }
+            .nav-btn { padding: 8px 9px; font-size: 11px; }
+            .slide-indicator { gap: 5px; padding: 6px 8px; font-size: 11px; }
+            #advanced-toolbar {
+                width: 72px;
+                flex: 0 0 72px;
+                flex-direction: column;
+                justify-content: center;
+                gap: 8px;
+                padding: 8px 5px;
+                border-top: 0;
+                border-left: 1px solid var(--ui-border);
+            }
+            #advanced-toolbar .relative {
+                width: 32px;
+                min-height: min(48dvh, 210px);
+                flex: 0 0 min(48dvh, 210px);
+            }
+            #zoomSlider {
+                width: 8px !important;
+                height: 100% !important;
+                min-height: 120px;
+                writing-mode: vertical-lr;
+                direction: rtl;
+            }
+            #toolbar-left-icon, #toolbar-right-icon { font-size: 15px; }
+            #annotationOverlay.fullscreen {
+                --annotation-toolbar-height: clamp(122px, 34dvh, 152px);
+            }
+            #annotationToolbar {
+                gap: 4px;
+                padding: 6px;
+                justify-content: center;
+            }
+            #annotationToolbar button {
+                min-height: 32px;
+                padding: 0 8px;
+                font-size: 12px;
+            }
+            #annotationToolbar button.tool-btn {
+                width: 34px;
+                min-width: 34px;
+                font-size: 15px;
+            }
+        }
+
+        /* Tailwind's inline utilities use these values throughout the screen.
+           Keeping the mapping here prevents a new view from drifting off-palette. */
+        [class*="bg-[#1e1e2f]"], [class*="bg-[#0f172a]"] { background-color: var(--ui-canvas) !important; }
+        [class*="bg-[#2a2a40]"] { background-color: var(--ui-surface) !important; }
+        [class*="bg-[#3a3a55]"] { background-color: var(--ui-surface-hover) !important; }
+        [class*="border-[#2a2a40]"], [class*="border-[#3a3a55]"] { border-color: var(--ui-border) !important; }
+        [class*="bg-[#4CAF50]"], [class*="bg-[#FF5722]"], [class*="bg-[#607D8B]"], [class*="bg-[#FFC107]"], [class*="bg-[#E91E63]"], [class*="bg-[#2196F3]"], [class*="bg-[#9C27B0]"], [class*="bg-[#00BCD4]"], [class*="bg-[#61dafb]"] { background-color: var(--ui-primary) !important; }
+        [class*="text-[#4CAF50]"], [class*="text-[#FF5722]"], [class*="text-[#607D8B]"], [class*="text-[#FFC107]"], [class*="text-[#E91E63]"], [class*="text-[#2196F3]"], [class*="text-[#9C27B0]"], [class*="text-[#00BCD4]"], [class*="text-[#61dafb]"] { color: var(--ui-primary) !important; }
+        [class*="border-[#61dafb]"], [class*="ring-[#61dafb]"] { border-color: var(--ui-primary) !important; --tw-ring-color: var(--ui-primary) !important; }
+        [class*="hover:bg-[#"]:hover { background-color: var(--ui-primary-hover) !important; }
+        [class*="active:bg-[#"]:active { background-color: var(--ui-primary-active) !important; }
+        [class*="accent-[#61dafb]"] { accent-color: var(--ui-primary) !important; }
+    </style>
+</head>
+<body class="text-white min-h-screen w-screen flex flex-col relative selection:bg-[#61dafb]">
+
+    <header class="flex items-center justify-between p-4 bg-[#1e1e2f] z-40 relative border-b border-[#2a2a40]">
+        <button onclick="toggleSidebar()" class="p-2 hover:bg-[#2a2a40] rounded-lg transition-colors active:scale-95">
+            <svg class="w-7 h-7 text-[#61dafb]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+        
+        <div class="text-center flex-grow">
+            <h1 class="text-lg font-black tracking-wide text-white uppercase">Smart <span class="text-[#61dafb]">PPT Controller</span></h1>
+            <p id="networkStatus" class="text-[9px] font-bold tracking-widest text-[#FFC107] mt-1 uppercase" role="status" aria-live="polite" data-state="connecting">CONNECTING...</p>
+        </div>
+        
+        <div class="w-11"></div> 
+    </header>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/70 z-40 hidden transition-opacity opacity-0" onclick="toggleSidebar()"></div>
+    
+    <nav id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-[#1e1e2f] transform -translate-x-full transition-transform duration-300 z-50 flex flex-col border-r border-[#2a2a40]">
+        <div class="p-6 border-b border-[#2a2a40] flex justify-between items-center">
+            <h2 class="text-xl font-black text-[#61dafb] tracking-wide uppercase">Menu</h2>
+            <button onclick="toggleSidebar()" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+        </div>
+        <div class="flex flex-col p-3 gap-2 flex-grow mt-2 overflow-y-auto custom-scrollbar">
+            
+            <!-- Multi-Deck Selector -->
+            <div id="deckSelector" class="deck-selector hidden">
+                <div class="text-xs font-bold text-[#61dafb] uppercase tracking-widest mb-3">Current Deck</div>
+                <div id="deckList" class="space-y-2"></div>
+                <button onclick="syncCurrentDeck()" id="syncDeckBtn" class="w-full mt-3 px-4 py-2 bg-[#61dafb]/10 text-[#61dafb] rounded-[10px] font-bold text-xs uppercase tracking-wider hover:bg-[#61dafb]/20 transition-colors">
+                    ↻ Sync Open Deck
+                </button>
+                <p id="deckSyncStatus" class="mt-2 text-[11px] leading-relaxed text-gray-400" aria-live="polite">Open a PowerPoint, start Slide Show, then sync it here.</p>
+                <ol class="mt-3 list-decimal pl-4 text-[10px] leading-relaxed text-gray-500">
+                    <li>Open the .pptx in PowerPoint.</li>
+                    <li>Start the show with F5 or Slide Show → From Beginning.</li>
+                    <li>Tap Sync Open Deck. The active presentation appears here.</li>
+                </ol>
+            </div>
+
+            <button onclick="switchMode('ai', this);" class="text-left px-4 py-4 rounded-[15px] text-white hover:bg-[#2a2a40] font-bold uppercase tracking-wider flex items-center gap-3 transition-colors">
+                <span class="text-xl">🤖</span> AI Mode
+            </button>
+            <button onclick="switchMode('manual', this);" class="text-left px-4 py-4 rounded-[15px] bg-[#2196F3]/10 text-[#2196F3] hover:bg-[#2a2a40] font-bold uppercase tracking-wider flex items-center gap-3 transition-colors">
+                <span class="text-xl">🕹️</span> Manual Mode
+            </button>
+            <button onclick="switchMode('advanced', this);" class="text-left px-4 py-4 rounded-[15px] text-white hover:bg-[#2a2a40] font-bold uppercase tracking-wider flex items-center gap-3 transition-colors">
+                <span class="text-xl">🗂️</span> Advanced Mode
+            </button>
+            
+            <div class="h-px bg-[#2a2a40] my-2"></div>
+            
+            <button onclick="switchMode('about', this);" class="text-left px-4 py-4 rounded-[15px] text-white hover:bg-[#2a2a40] font-bold uppercase tracking-wider flex items-center gap-3 transition-colors">
+                <span class="text-xl">ℹ️</span> About Us
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-grow relative overflow-auto bg-[#1e1e2f]">
+
+        <!-- AI Mode -->
+        <div id="view-ai" class="absolute inset-0 flex-col items-center justify-center p-6 gap-6 overflow-y-auto custom-scrollbar hidden">
+            <div class="text-center mt-10">
+                <h2 class="text-2xl font-black text-[#61dafb] uppercase tracking-widest">Live Audio Link</h2>
+                <p class="text-xs text-gray-400 mt-3 max-w-xs mx-auto leading-relaxed">
+                    Microphone is always on. Speak naturally (e.g., "next slide"). The AI processes in the background.
+                </p>
+            </div>
+
+            <div class="relative flex items-center justify-center w-32 h-32 my-10 mx-auto pointer-events-none">
+                <div id="aiPulseRing" class="absolute inset-0 rounded-full bg-[#E91E63]/20 scale-[1.5] animate-ping transition-all duration-700"></div>
+                <div class="relative z-10 w-24 h-24 rounded-full bg-[#E91E63] flex items-center justify-center text-4xl transition-all">
+                    <span>🔴</span>
+                </div>
+            </div>
+
+            <div class="text-center w-full">
+                <p id="micText" class="text-lg font-black tracking-widest text-gray-500 uppercase">Connecting Mic...</p>
+                <p id="micSubtext" class="text-[10px] font-bold text-gray-600 uppercase mt-2">Awaiting stream initialization</p>
+            </div>
+        </div>
+
+        <!-- Manual Mode -->
+        <div id="view-manual" class="absolute inset-0 flex flex-col p-4 gap-4 overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between bg-[#2a2a40] p-6 rounded-[20px] border border-[#3a3a55] shrink-0">
+                <div>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Current Slide</p>
+                    <p id="lblCurrentSlide" class="text-5xl font-black text-[#61dafb] mt-1">1</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total Deck</p>
+                    <p id="lblTotalSlides" class="text-3xl font-black text-gray-500 mt-2">--</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 mt-2 flex-grow min-h-[250px]">
+                <button onpointerdown="fastTrigger(event, 'NEXT')" class="flex-grow min-h-[120px] bg-[#4CAF50] hover:bg-[#3c8f40] active:bg-[#2e7031] text-white font-black rounded-[20px] text-3xl uppercase tracking-widest flex items-center justify-center gap-3 transition-colors">
+                    Next ➡️
+                </button>
+                <button onpointerdown="fastTrigger(event, 'PREVIOUS')" class="flex-grow min-h-[90px] bg-[#FF5722] hover:bg-[#cc451b] active:bg-[#a33615] text-white font-bold rounded-[20px] text-xl uppercase tracking-widest flex items-center justify-center gap-2 transition-colors">
+                    ⬅️ Prev
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-1 min-h-[80px] shrink-0">
+                <button onpointerdown="fastTrigger(event, 'BLACKOUT')" class="bg-[#607D8B] hover:bg-[#4d646e] active:bg-[#3a4b53] text-white font-bold py-5 rounded-[20px] text-xs uppercase tracking-wider transition-colors">
+                    ⬛ Blackout
+                </button>
+                <button onpointerdown="fastTrigger(event, 'LASER')" class="bg-[#FFC107] hover:bg-[#cc9a06] active:bg-[#997304] text-white font-bold py-5 rounded-[20px] text-xs uppercase tracking-wider transition-colors">
+                    🔴 Laser
+                </button>
+            </div>
+        </div>
+
+        <!-- Advanced Mode -->
+        <div id="view-advanced" class="absolute inset-0 flex flex-col hidden bg-[#1e1e2f]">
+            
+            <!-- Gallery Grid Area -->
+            <div id="galleryContainer" class="flex-grow relative bg-[#1e1e2f] flex flex-col overflow-hidden min-h-0">
+                
+                <!-- Navigation Controls (Top) -->
+                <div class="p-3 shrink-0" id="advancedNavBar">
+                    <div class="navigation-controls">
+                        <button class="nav-btn" onclick="triggerCommand('PREVIOUS')" id="prevSlideBtn" title="Previous Slide">◀ Slide</button>
+                        
+                        <div class="slide-indicator">
+                            <span id="advCurrentSlide">1</span> / <span id="advTotalSlides">--</span>
+                            <span id="advDeckName" class="text-gray-400 ml-4">No Deck</span>
+                        </div>
+                        
+                        <button class="nav-btn" onclick="triggerCommand('NEXT')" id="nextSlideBtn" title="Next Slide">Slide ▶</button>
+                        <button class="nav-btn primary" onclick="toggleAnnotationMode()" id="annotationToggleBtn" title="Toggle Annotations">🖊️ Annotate</button>
+                        <button class="nav-btn" onclick="clearCurrentSlideAnnotations()" id="clearAnnotationsBtn" title="Clear Annotations">🗑️ Clear</button>
+                        <button class="nav-btn" onclick="undoLastAnnotation()" id="undoAnnotationBtn" title="Undo Last Stroke">↩️ Undo</button>
+                    </div>
+                </div>
+
+                <div id="galleryGrid" class="flex-grow p-3 overflow-y-auto custom-scrollbar content-start touch-pan-y min-h-0" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;">
+                    <div class="col-span-full text-center py-20 text-gray-500 font-mono text-sm uppercase tracking-widest">
+                        Awaiting Sync...
+                    </div>
+                </div>
+                <div id="swipeHint" class="hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/85 px-6 py-3 rounded-full text-[10px] font-black text-[#61dafb] tracking-widest pointer-events-none border border-[#61dafb]/30 backdrop-blur-sm">
+                    <span class="animate-pulse">👈 SWIPE TO NAVIGATE 👉</span>
+                </div>
+                <div class="single-slide-controls">
+                    <button id="singleSlidePrevious" type="button" class="single-slide-nav" onclick="navigateSlideBy(-1)" aria-label="Previous slide" title="Previous slide">‹</button>
+                    <button id="singleSlideNext" type="button" class="single-slide-nav" onclick="navigateSlideBy(1)" aria-label="Next slide" title="Next slide">›</button>
+                    <div class="single-slide-actions">
+                        <button id="mobileAnnotateBtn" type="button" class="single-slide-action" onclick="toggleAnnotationMode()" aria-label="Annotate current slide" aria-pressed="false">✏️ Annotate</button>
+                        <button id="advancedFullscreenBtn" type="button" class="single-slide-action" onclick="toggleAdvancedFullscreen()" aria-label="Enter full screen">⛶ Full screen</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Annotation Canvas Overlay (Full Bleed Mode) -->
+            <div id="annotationOverlay" class="annotation-overlay-container hidden">
+                <img id="annotationSlideBackground" alt="Current slide annotation background">
+                <div id="annotationNoSlide">Sync an open PowerPoint deck to see its slide here.</div>
+                <div id="annotationSlideLabel" aria-live="polite"></div>
+                <canvas id="annotationCanvas"></canvas>
+                <button id="annotationPreviousSlide" type="button" class="annotation-slide-nav" onclick="navigateSlideBy(-1)" aria-label="Previous slide" title="Previous slide">‹</button>
+                <button id="annotationNextSlide" type="button" class="annotation-slide-nav" onclick="navigateSlideBy(1)" aria-label="Next slide" title="Next slide">›</button>
+                <div id="annotationToolbar" class="annotation-toolbar absolute left-1/2 transform -translate-x-1/2 z-200">
+                    <!-- Tool buttons -->
+                    <button class="tool-btn active" data-tool="pen" title="Pen (P)" onclick="selectAnnotationTool('pen')">✏️</button>
+                    <button class="tool-btn" data-tool="highlighter" title="Highlighter (H)" onclick="selectAnnotationTool('highlighter')">🖍️</button>
+                    <button class="tool-btn" data-tool="eraser" title="Eraser (E)" onclick="selectAnnotationTool('eraser')">🧽</button>
+                    <button class="tool-btn" data-tool="laser" title="Laser Pointer (L)" onclick="selectAnnotationTool('laser')">🔴</button>
+                    <button class="tool-btn" data-tool="arrow" title="Arrow (A)" onclick="selectAnnotationTool('arrow')">➤</button>
+                    <button class="tool-btn" data-tool="rectangle" title="Rectangle (R)" onclick="selectAnnotationTool('rectangle')">▭</button>
+                    <button class="tool-btn" data-tool="circle" title="Circle (C)" onclick="selectAnnotationTool('circle')">⭘</button>
+                    <button class="tool-btn" data-tool="text" title="Text (T)" onclick="selectAnnotationTool('text')">T</button>
+                    
+                    <div class="w-px h-8 bg-[#3a3a55] mx-2"></div>
+                    
+                    <!-- Color picker -->
+                    <input type="color" id="annotationColor" class="color-picker" value="#FF3B30" oninput="updateAnnotationColor(this.value)" title="Marker color">
+                    
+                    <div class="w-px h-8 bg-[#3a3a55] mx-2"></div>
+                    
+                    <!-- Width slider -->
+                    <input type="range" id="annotationWidth" class="width-slider" min="1" max="20" value="3" oninput="updateAnnotationWidth(this.value)" title="Stroke Width">
+                    <span id="widthValue" class="text-xs text-gray-400 w-8 text-center">3</span>
+                    
+                    <div class="w-px h-8 bg-[#3a3a55] mx-2"></div>
+                    
+                    <span id="annotationStatus" class="px-2 text-[10px] font-semibold text-gray-400 whitespace-nowrap" aria-live="polite">Ready</span>
+                    <button onclick="clearCurrentSlideAnnotations()" class="px-3 py-1 text-xs bg-[#E91E63]/20 text-[#E91E63] rounded-lg hover:bg-[#E91E63]/30 transition-colors" title="Clear Slide">Clear</button>
+                    <button onclick="undoLastAnnotation()" class="px-3 py-1 text-xs rounded-lg" title="Undo Last Stroke">Undo</button>
+                    <button onclick="redoLastAnnotation()" class="px-3 py-1 text-xs rounded-lg" title="Redo Last Stroke">Redo</button>
+                    <button id="annotationBlackoutBtn" onclick="toggleAnnotationBlackout()" class="px-3 py-1 text-xs bg-black text-white rounded-lg" title="Black out the slide and keep drawing">⬛ Blackout</button>
+                    <button onclick="toggleAnnotationMode()" class="px-3 py-1 text-xs bg-[#61dafb]/20 text-[#61dafb] rounded-lg hover:bg-[#61dafb]/30 transition-colors" title="Done">Done</button>
+                    <div id="annotationTextEntry" class="annotation-text-entry hidden">
+                        <input id="annotationTextInput" type="text" maxlength="160" autocomplete="off" placeholder="Type text, then tap the slide" aria-label="Text to place on slide">
+                        <span class="text-[10px] text-gray-400 whitespace-nowrap">Tap to place</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar Area (Bottom) -->
+            <div id="advanced-toolbar" class="p-4 bg-[#2a2a40] flex items-center justify-between z-10 border-t border-[#3a3a55] shrink-0">
+                <span id="toolbar-left-icon" class="text-lg opacity-50">📱</span>
+                
+                <div class="relative flex-grow flex items-center justify-center w-full min-h-[56px]">
+                    <input type="range" id="zoomSlider" min="1" max="5" value="2" aria-label="Slides per row" title="Slides per row; at 1 slide, swipe left or right to navigate" class="w-full accent-[#61dafb] h-1 bg-[#1e1e2f] rounded-lg appearance-none cursor-pointer outline-none">
+                </div>
+                <span id="zoomValue" class="text-[10px] font-bold tracking-wide text-gray-400">2 columns</span>
+                <button id="galleryLayoutToggle" type="button" onclick="toggleGalleryLayout()" aria-pressed="false" title="Show every slide in a vertical list" class="shrink-0 min-w-[74px] px-3 py-2 rounded-lg bg-[#2a2a40] text-xs font-bold text-white border border-[#3a3a55] hover:border-[#61dafb]">☷ List</button>
+                
+                <span id="toolbar-right-icon" class="text-lg opacity-50">🗂️</span>
+            </div>
+        </div>
+
+        <!-- About Us Mode -->
+        <div id="view-about" class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-[#1e1e2f] hidden overflow-y-auto custom-scrollbar">
+            <h2 class="text-2xl font-black text-white mb-8 tracking-widest uppercase">About Us</h2>
+            
+            <div class="bg-[#2a2a40] p-10 rounded-[25px] border border-[#3a3a55] text-center w-full max-w-md">
+                <p class="text-gray-400 text-xs font-bold tracking-widest uppercase mb-8">Built & Engineered By</p>
+                
+                <div class="flex flex-col gap-8">
+                    <div class="group">
+                        <h3 class="text-5xl font-black text-white transform transition-transform group-hover:scale-105">
+                            VENKAT
+                        </h3>
+                    </div>
+                    
+                    <div class="w-16 h-[2px] bg-[#3a3a55] mx-auto"></div>
+                    
+                    <div class="group">
+                        <h3 class="text-5xl font-black text-white transform transition-transform group-hover:scale-105">
+                            SHAAN
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="mt-12 text-gray-600 text-[10px] tracking-widest font-mono uppercase">Smart PPT Controller Core v2.0</p>
+        </div>
+
+    </main>
+
+    <script>
+        // Socket connection
+        const networkStatusClasses = {
+            connecting: "text-[9px] font-bold tracking-widest text-[#FFC107] mt-1 uppercase",
+            online: "text-[9px] font-bold tracking-widest text-[#4CAF50] mt-1 uppercase",
+            retrying: "text-[9px] font-bold tracking-widest text-[#FFC107] animate-pulse mt-1 uppercase",
+            error: "text-[9px] font-bold tracking-widest text-[#E91E63] animate-pulse mt-1 uppercase"
+        };
+        function setNetworkStatus(message, status) {
+            const element = document.getElementById('networkStatus');
+            element.textContent = message;
+            element.dataset.state = status;
+            element.className = networkStatusClasses[status] || networkStatusClasses.error;
+        }
+        const socketClientAvailable = typeof io === 'function';
+        const socket = socketClientAvailable ? io() : { active: false, on: ()=>{}, emit: ()=>{} };
+        if (!socketClientAvailable) {
+            setNetworkStatus('LIVE CONNECTION UNAVAILABLE', 'error');
+        }
+
+        // State
+        let state = { currentSlide: 1, totalSlides: 0, presentationName: '', presentationId: null };
+        let deckData = [];
+        let decks = [];
+        let activeDeckId = null;
+        const galleryLayoutMediaQuery = window.matchMedia('(max-width: 640px) and (orientation: portrait)');
+        let galleryLayout = galleryLayoutMediaQuery.matches ? 'list' : 'grid';
+        let galleryLayoutManuallySelected = false;
+        const handleGalleryViewportChange = event => {
+            if (galleryLayoutManuallySelected) return;
+            galleryLayout = event.matches ? 'list' : 'grid';
+            renderGallery();
+        };
+        if (galleryLayoutMediaQuery.addEventListener) {
+            galleryLayoutMediaQuery.addEventListener('change', handleGalleryViewportChange);
+        } else {
+            galleryLayoutMediaQuery.addListener(handleGalleryViewportChange);
+        }
+
+        // Annotation state
+        let annotationMode = false;
+        let annotationBlackout = false;
+        let currentTool = 'pen';
+        let currentColor = '#FF3B30';
+        let currentWidth = 3;
+        let isDrawing = false;
+        let activePointerId = null;
+        let annotationRequestId = 0;
+        let currentStroke = null;
+        let annotationCanvas = null;
+        let annotationCtx = null;
+        let annotationBaseCanvas = null;
+        let annotationBaseCtx = null;
+        let annotationBaseDirty = true;
+        let strokes = []; // Completed strokes for current slide
+        let strokesSlideIndex = 0;
+        let laserPoint = null;
+        let laserTimeout = null;
+
+        // Annotation tools
+        const ANNOTATION_TOOLS = ['pen', 'highlighter', 'eraser', 'laser', 'arrow', 'rectangle', 'circle', 'text'];
+        const TOOL_ICONS = {
+            pen: '✏️', highlighter: '🖍️', eraser: '🧽', laser: '🔴',
+            arrow: '➤', rectangle: '▭', circle: '⭘', text: 'T'
+        };
+
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const views = {
+            'ai': document.getElementById('view-ai'),
+            'manual': document.getElementById('view-manual'),
+            'advanced': document.getElementById('view-advanced'),
+            'about': document.getElementById('view-about')
+        };
+        const galleryGrid = document.getElementById('galleryGrid');
+        const galleryContainer = document.getElementById('galleryContainer');
+        const zoomSlider = document.getElementById('zoomSlider');
+        const swipeHint = document.getElementById('swipeHint');
+        const deckSelector = document.getElementById('deckSelector');
+        const deckList = document.getElementById('deckList');
+        const annotationOverlay = document.getElementById('annotationOverlay');
+        const annotationCanvasEl = document.getElementById('annotationCanvas');
+        const annotationToolbar = document.getElementById('annotationToolbar');
+        const annotationSlideBackground = document.getElementById('annotationSlideBackground');
+        const annotationNoSlide = document.getElementById('annotationNoSlide');
+        const annotationSlideLabel = document.getElementById('annotationSlideLabel');
+
+        let audioCtx, audioStream, audioProc;
+        let micInitialized = false;
+
+        // Initialize
+        function init() {
+            setupAnnotationCanvas();
+            setupKeyboardShortcuts();
+            renderDeckList();
+        }
+
+        function setupAnnotationCanvas() {
+            annotationCanvas = annotationCanvasEl;
+            annotationCtx = annotationCanvas.getContext('2d');
+            annotationBaseCanvas = document.createElement('canvas');
+            annotationBaseCtx = annotationBaseCanvas.getContext('2d');
+            annotationSlideBackground.addEventListener('load', () => {
+                annotationSlideBackground.style.display = 'block';
+                annotationNoSlide.style.display = 'none';
+                annotationBaseDirty = true;
+                redrawAnnotations();
+            });
+            annotationSlideBackground.addEventListener('error', () => {
+                annotationSlideBackground.style.display = 'none';
+                annotationNoSlide.textContent = `Slide ${state.currentSlide} preview could not be loaded. Reconnect to the controller and sync the deck.`;
+                annotationNoSlide.style.display = 'block';
+            });
+            
+            // Mouse events
+            annotationCanvas.addEventListener('pointerdown', onPointerDown);
+            annotationCanvas.addEventListener('pointermove', onPointerMove);
+            annotationCanvas.addEventListener('pointerup', onPointerUp);
+            annotationCanvas.addEventListener('pointercancel', onPointerCancel);
+            
+            // Touch events for laser pointer
+            annotationCanvas.addEventListener('touchmove', (e) => {
+                if (currentTool === 'laser' && annotationMode) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const rect = annotationCanvas.getBoundingClientRect();
+                    updateLaserPointer(touch.clientX - rect.left, touch.clientY - rect.top);
+                }
+            }, { passive: false });
+
+            document.getElementById('annotationTextInput').addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.currentTarget.blur();
+                    setAnnotationStatus('Tap the slide to place the text');
+                }
+            });
+        }
+
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                
+                // Tool shortcuts
+                const toolKeys = { 'KeyP': 'pen', 'KeyH': 'highlighter', 'KeyE': 'eraser', 
+                    'KeyL': 'laser', 'KeyA': 'arrow', 'KeyR': 'rectangle', 
+                    'KeyC': 'circle', 'KeyT': 'text' };
+                if (toolKeys[e.code]) {
+                    selectAnnotationTool(toolKeys[e.code]);
+                    return;
+                }
+                
+                // Toggle annotation mode
+                if (e.code === 'KeyN' && e.ctrlKey) {
+                    e.preventDefault();
+                    toggleAnnotationMode();
+                }
+                
+                // Undo
+                if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+                    e.preventDefault();
+                    undoLastAnnotation();
+                }
+                if ((e.code === 'KeyY' && (e.ctrlKey || e.metaKey)) ||
+                    (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey) && e.shiftKey)) {
+                    e.preventDefault();
+                    redoLastAnnotation();
+                }
+                
+                // Clear
+                if (e.code === 'Delete' || e.code === 'Backspace') {
+                    if (annotationMode) clearCurrentSlideAnnotations();
+                }
+            });
+        }
+
+        // Sidebar & Mode Switching
+        function toggleSidebar() {
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function switchMode(mode, element) {
+            toggleSidebar(); 
+            
+            Object.values(views).forEach(v => {
+                v.classList.add('hidden');
+                v.classList.remove('flex');
+            });
+            
+            views[mode].classList.remove('hidden');
+            views[mode].classList.add('flex');
+
+            if (mode === 'advanced') {
+                socket.emit('request_deck_data'); 
+                socket.emit('request_deck_list');
+                renderGallery();
+                deckSelector.classList.remove('hidden');
+            } else {
+                document.body.classList.remove('single-slide-landscape');
+                galleryContainer.classList.remove('single-slide-landscape');
+                views.advanced.classList.remove('single-slide-landscape');
+                deckSelector.classList.add('hidden');
+                exitAnnotationMode();
+            }
+            
+            if (mode === 'ai' && !micInitialized) initContinuousMic();
+            
+            document.querySelectorAll('#sidebar button').forEach(btn => {
+                btn.classList.remove('bg-[#2196F3]/10', 'text-[#2196F3]', 'bg-[#9C27B0]/10', 'text-[#9C27B0]', 'bg-[#00BCD4]/10', 'text-[#00BCD4]', 'bg-[#FFC107]/10', 'text-[#FFC107]');
+                btn.classList.add('text-white');
+            });
+            
+            if (element) {
+                element.classList.remove('text-white');
+                if (mode === 'ai') element.classList.add('bg-[#9C27B0]/10', 'text-[#9C27B0]');
+                if (mode === 'manual') element.classList.add('bg-[#2196F3]/10', 'text-[#2196F3]');
+                if (mode === 'advanced') element.classList.add('bg-[#00BCD4]/10', 'text-[#00BCD4]');
+                if (mode === 'about') element.classList.add('bg-[#FFC107]/10', 'text-[#FFC107]');
+            }
+
+            document.getElementById('lblCurrentSlide').innerText = state.currentSlide;
+            document.getElementById('lblTotalSlides').innerText = state.totalSlides;
+        }
+
+        // Deck Management
+        function renderDeckList() {
+            if (!deckList) return;
+            deckList.replaceChildren();
+            if (decks.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'text-center text-gray-500 py-4 text-sm';
+                emptyState.textContent = 'No PowerPoint deck synced';
+                deckList.appendChild(emptyState);
+                return;
+            }
+
+            decks.forEach(deck => {
+                const row = document.createElement('div');
+                row.className = `deck-item ${deck.id === activeDeckId ? 'active' : ''}`;
+                const info = document.createElement('div');
+                info.className = 'deck-info';
+                const name = document.createElement('span');
+                name.className = 'deck-name';
+                name.textContent = deck.name || 'Untitled presentation';
+                const meta = document.createElement('span');
+                meta.className = 'deck-meta';
+                meta.textContent = `${deck.current_slide || 1}/${deck.total_slides || 0} slides · active PowerPoint`;
+                info.append(name, meta);
+                const indicator = document.createElement('span');
+                indicator.className = `deck-indicator ${deck.is_active ? '' : 'inactive'}`;
+                row.append(info, indicator);
+                deckList.appendChild(row);
+            });
+        }
+
+        function syncCurrentDeck() {
+            const button = document.getElementById('syncDeckBtn');
+            const status = document.getElementById('deckSyncStatus');
+            button.disabled = true;
+            button.textContent = 'Syncing…';
+            status.textContent = 'Connecting to PowerPoint and refreshing slide previews…';
+            socket.emit('sync_deck');
+        }
+
+        // Annotation Mode
+        function toggleAnnotationMode() {
+            if (annotationMode) {
+                exitAnnotationMode();
+            } else {
+                enterAnnotationMode();
+            }
+        }
+
+        async function toggleAdvancedFullscreen() {
+            const button = document.getElementById('advancedFullscreenBtn');
+            try {
+                if (document.fullscreenElement === views.advanced || document.webkitFullscreenElement === views.advanced) {
+                    if (document.exitFullscreen) await document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    return;
+                }
+                const requestFullscreen = views.advanced.requestFullscreen || views.advanced.webkitRequestFullscreen;
+                if (!requestFullscreen) {
+                    button.textContent = 'Full screen unavailable';
+                    return;
+                }
+                await requestFullscreen.call(views.advanced);
+            } catch (error) {
+                console.warn('Could not enter full screen:', error);
+                button.textContent = 'Full screen unavailable';
+            }
+        }
+
+        function updateFullscreenButton() {
+            const button = document.getElementById('advancedFullscreenBtn');
+            const active = document.fullscreenElement === views.advanced || document.webkitFullscreenElement === views.advanced;
+            button.textContent = active ? '⤢ Exit full screen' : '⛶ Full screen';
+            button.setAttribute('aria-label', active ? 'Exit full screen' : 'Enter full screen');
+        }
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+
+        function enterAnnotationMode() {
+            annotationMode = true;
+            annotationOverlay.classList.remove('hidden');
+            annotationOverlay.classList.add('fullscreen');
+            updateAnnotationBackground();
+            requestAnimationFrame(resizeAnnotationCanvas);
+            
+            // Update UI
+            document.getElementById('annotationToggleBtn').classList.add('active');
+            document.getElementById('annotationToggleBtn').innerText = '✏️ Annotating...';
+            const mobileAnnotateButton = document.getElementById('mobileAnnotateBtn');
+            mobileAnnotateButton.classList.add('active');
+            mobileAnnotateButton.textContent = '✓ Done annotating';
+            mobileAnnotateButton.setAttribute('aria-pressed', 'true');
+            
+            // Load existing strokes for current slide
+            selectSlideAnnotations();
+            
+            // Notify server
+            socket.emit('annotation_mode', { enabled: true, slide_index: state.currentSlide - 1 });
+        }
+
+        function exitAnnotationMode() {
+            cancelCurrentStroke();
+            annotationMode = false;
+            annotationOverlay.classList.add('hidden');
+            annotationOverlay.classList.remove('fullscreen');
+            annotationOverlay.classList.remove('blackout');
+            
+            document.getElementById('annotationToggleBtn').classList.remove('active');
+            document.getElementById('annotationToggleBtn').innerText = '🖊️ Annotate';
+            const mobileAnnotateButton = document.getElementById('mobileAnnotateBtn');
+            mobileAnnotateButton.classList.remove('active');
+            mobileAnnotateButton.textContent = '✏️ Annotate';
+            mobileAnnotateButton.setAttribute('aria-pressed', 'false');
+            
+            socket.emit('annotation_mode', { enabled: false });
+        }
+
+        function resizeAnnotationCanvas() {
+            const rect = annotationCanvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+            const dpr = window.devicePixelRatio || 1;
+            annotationCanvas.width = rect.width * dpr;
+            annotationCanvas.height = rect.height * dpr;
+            annotationBaseCanvas.width = annotationCanvas.width;
+            annotationBaseCanvas.height = annotationCanvas.height;
+            annotationBaseDirty = true;
+            annotationCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            redrawAnnotations();
+        }
+
+        function updateAnnotationBackground() {
+            const slide = deckData.find(item => item.slideNumber === state.currentSlide);
+            const hasSlideImage = Boolean(slide && slide.url);
+            if (hasSlideImage) {
+                const imageUrl = new URL(slide.url, window.location.href);
+                if (state.thumbnailRevision) imageUrl.searchParams.set('rev', String(state.thumbnailRevision));
+                const imageSrc = imageUrl.toString();
+                if (annotationSlideBackground.src !== imageSrc) {
+                    annotationSlideBackground.src = imageSrc;
+                }
+                annotationSlideBackground.style.display = 'block';
+                annotationNoSlide.style.display = 'none';
+            } else {
+                if (annotationSlideBackground.hasAttribute('src')) annotationSlideBackground.removeAttribute('src');
+                annotationSlideBackground.style.display = 'none';
+                annotationNoSlide.textContent = state.presentationId
+                    ? 'Waiting for this slide preview from the controller…'
+                    : 'Sync an open PowerPoint deck to see its slide here.';
+                annotationNoSlide.style.display = 'block';
+            }
+            const deckName = state.presentationName || decks.find(deck => deck.id === activeDeckId)?.name || 'No deck';
+            annotationSlideLabel.textContent = `${deckName} · Slide ${state.currentSlide} / ${state.totalSlides || 0}`;
+            const canGoPrevious = state.currentSlide > 1;
+            const canGoNext = state.totalSlides > 0 && state.currentSlide < state.totalSlides;
+            document.getElementById('singleSlidePrevious').disabled = !canGoPrevious;
+            document.getElementById('annotationPreviousSlide').disabled = !canGoPrevious;
+            document.getElementById('singleSlideNext').disabled = !canGoNext;
+            document.getElementById('annotationNextSlide').disabled = !canGoNext;
+            annotationOverlay.classList.toggle('blackout', annotationBlackout);
+            const blackoutButton = document.getElementById('annotationBlackoutBtn');
+            if (blackoutButton) blackoutButton.textContent = annotationBlackout ? '↩ Restore Slide' : '⬛ Blackout';
+        }
+
+        function toggleAnnotationBlackout() {
+            if (!annotationMode) return;
+            toggleBlackoutState();
+        }
+
+        function toggleBlackoutState() {
+            annotationBlackout = !annotationBlackout;
+            updateAnnotationBackground();
+            triggerCommand('BLACKOUT');
+        }
+
+        window.addEventListener('resize', () => {
+            if (annotationMode) {
+                setTimeout(() => {
+                    resizeAnnotationCanvas();
+                }, 100);
+            }
+        });
+
+        // Tool Selection
+        function selectAnnotationTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tool === tool);
+            });
+            
+            // Update cursor
+            const cursors = {
+                pen: 'crosshair', highlighter: 'crosshair', eraser: 'cell',
+                laser: 'none', arrow: 'crosshair', rectangle: 'crosshair',
+                circle: 'crosshair', text: 'text'
+            };
+            annotationCanvas.style.cursor = cursors[tool] || 'crosshair';
+            const textEntry = document.getElementById('annotationTextEntry');
+            const textInput = document.getElementById('annotationTextInput');
+            textEntry.classList.toggle('hidden', tool !== 'text');
+            if (tool === 'text') {
+                setAnnotationStatus('Type text, then tap the slide');
+                requestAnimationFrame(() => textInput.focus());
+            }
+            
+            // Hide laser if switching away
+            if (tool !== 'laser') hideLaserPointer();
+        }
+
+        function updateAnnotationColor(color) {
+            currentColor = color;
+        }
+
+        function updateAnnotationWidth(width) {
+            currentWidth = parseInt(width);
+            document.getElementById('widthValue').innerText = width;
+        }
+
+        // Drawing Logic
+        function getCanvasPoint(clientX, clientY) {
+            const rect = annotationCanvas.getBoundingClientRect();
+            return {
+                x: Math.max(0, Math.min(rect.width, clientX - rect.left)),
+                y: Math.max(0, Math.min(rect.height, clientY - rect.top))
+            };
+        }
+
+        function getSlideAspect() {
+            const imageWidth = annotationSlideBackground.naturalWidth || 16;
+            const imageHeight = annotationSlideBackground.naturalHeight || 9;
+            return imageWidth / imageHeight;
+        }
+
+        function getPowerPointPoints(points, sourceWidth, sourceHeight) {
+            const rect = annotationCanvas.getBoundingClientRect();
+            const imageWidth = annotationSlideBackground.naturalWidth || rect.width;
+            const imageHeight = annotationSlideBackground.naturalHeight || rect.height;
+            const width = sourceWidth || rect.width;
+            const height = sourceHeight || rect.height;
+            const scale = Math.min(width / imageWidth, height / imageHeight);
+            const slideWidth = imageWidth * scale;
+            const slideHeight = imageHeight * scale;
+            const offsetX = (width - slideWidth) / 2;
+            const offsetY = (height - slideHeight) / 2;
+
+            return points.map(point => ({
+                x: Math.max(0, Math.min(1, (point.x - offsetX) / slideWidth)),
+                y: Math.max(0, Math.min(1, (point.y - offsetY) / slideHeight))
+            }));
+        }
+
+        function mapPowerPointPointsToCanvas(points) {
+            const rect = annotationCanvas.getBoundingClientRect();
+            const imageWidth = annotationSlideBackground.naturalWidth || rect.width;
+            const imageHeight = annotationSlideBackground.naturalHeight || rect.height;
+            const scale = Math.min(rect.width / imageWidth, rect.height / imageHeight);
+            const slideWidth = imageWidth * scale;
+            const slideHeight = imageHeight * scale;
+            const offsetX = (rect.width - slideWidth) / 2;
+            const offsetY = (rect.height - slideHeight) / 2;
+            return points.map(point => ({
+                x: offsetX + point.x * slideWidth,
+                y: offsetY + point.y * slideHeight,
+                pressure: point.pressure ?? 1
+            }));
+        }
+
+        function simplifyPoints(points, tolerance = 1.25, maxPoints = 150) {
+            if (points.length <= 2) return points;
+            const keep = new Uint8Array(points.length);
+            keep[0] = keep[points.length - 1] = 1;
+            const stack = [[0, points.length - 1]];
+            while (stack.length) {
+                const [first, last] = stack.pop();
+                const a = points[first], b = points[last];
+                const dx = b.x - a.x, dy = b.y - a.y;
+                const lengthSquared = dx * dx + dy * dy;
+                let maximum = tolerance * tolerance, selected = -1;
+                for (let i = first + 1; i < last; i++) {
+                    let t = lengthSquared ? ((points[i].x - a.x) * dx + (points[i].y - a.y) * dy) / lengthSquared : 0;
+                    t = Math.max(0, Math.min(1, t));
+                    const px = a.x + t * dx, py = a.y + t * dy;
+                    const distance = (points[i].x - px) ** 2 + (points[i].y - py) ** 2;
+                    if (distance > maximum) { maximum = distance; selected = i; }
+                }
+                if (selected >= 0) {
+                    keep[selected] = 1;
+                    stack.push([first, selected], [selected, last]);
+                }
+            }
+            let result = points.filter((_, index) => keep[index]);
+            if (result.length > maxPoints) {
+                result = Array.from({ length: maxPoints }, (_, i) =>
+                    result[Math.round(i * (result.length - 1) / (maxPoints - 1))]);
+            }
+            return result;
+        }
+
+        function sendAnnotationStroke(stroke, screenPoints = stroke.points, normalizedPoints = null) {
+            const canvasWidth = annotationCanvas.clientWidth;
+            const canvasHeight = annotationCanvas.clientHeight;
+            socket.emit('annotation', {
+                stroke_id: stroke.id,
+                tool: stroke.tool,
+                color: stroke.color,
+                width: stroke.width,
+                points: screenPoints.map(p => ({ x: p.x, y: p.y, pressure: p.pressure ?? 1 })),
+                ppt_points: normalizedPoints || getPowerPointPoints(screenPoints, canvasWidth, canvasHeight),
+                canvas_width: canvasWidth,
+                canvas_height: canvasHeight,
+                slide_aspect: getSlideAspect(),
+                text: stroke.text || undefined,
+                font_size: stroke.font_size || undefined,
+                slide_index: Number.isInteger(stroke.slide_index) ? stroke.slide_index : state.currentSlide - 1
+            });
+        }
+
+        const ANNOTATION_PREVIEW_INTERVAL_MS = 30;
+
+        function commitAnnotationStroke(stroke) {
+            const simplifyTolerance = Math.max(1.1, stroke.width * 0.25);
+            const screenPoints = simplifyPoints(stroke.points, simplifyTolerance, 120);
+            const normalizedPoints = stroke.preview?.anchors?.length
+                ? getPowerPointPoints(stroke.points, annotationCanvas.clientWidth, annotationCanvas.clientHeight)
+                : null;
+            sendAnnotationStroke(stroke, screenPoints, normalizedPoints);
+        }
+
+        function sendAnnotationPreviewChunk(stroke, commitAfterPreview = false) {
+            const preview = stroke.preview;
+            if (!preview) {
+                if (commitAfterPreview) commitAnnotationStroke(stroke);
+                return;
+            }
+            if (commitAfterPreview) preview.commitRequested = true;
+            if (preview.timer) {
+                clearTimeout(preview.timer);
+                preview.timer = null;
+            }
+            if (preview.failed) {
+                if (preview.commitRequested) {
+                    preview.commitRequested = false;
+                    commitAnnotationStroke(stroke);
+                }
+                return;
+            }
+            if (preview.inFlight) {
+                preview.pending = true;
+                return;
+            }
+
+            const endCount = stroke.points.length;
+            const pointOffset = Math.max(0, preview.acknowledgedPointCount - 1);
+            if (endCount - pointOffset < 2) {
+                if (preview.commitRequested) {
+                    preview.commitRequested = false;
+                    commitAnnotationStroke(stroke);
+                }
+                return;
+            }
+
+            const screenPoints = stroke.points.slice(pointOffset, endCount);
+            const canvasWidth = annotationCanvas.clientWidth;
+            const canvasHeight = annotationCanvas.clientHeight;
+            preview.inFlight = true;
+            preview.pending = false;
+            socket.emit('annotation_preview', {
+                stroke_id: stroke.id,
+                tool: stroke.tool,
+                color: stroke.color,
+                width: stroke.width,
+                points: screenPoints.map(p => ({ x: p.x, y: p.y, pressure: p.pressure ?? 1 })),
+                ppt_points: getPowerPointPoints(screenPoints, canvasWidth, canvasHeight),
+                canvas_width: canvasWidth,
+                canvas_height: canvasHeight,
+                slide_aspect: getSlideAspect(),
+                slide_index: stroke.slide_index,
+                point_offset: pointOffset
+            }, (ack = {}) => {
+                preview.inFlight = false;
+                if (ack.ok && ack.projected) {
+                    preview.acknowledgedPointCount = endCount;
+                    preview.anchors.push(endCount - 1);
+                } else {
+                    preview.failed = true;
+                }
+
+                if (preview.commitRequested) {
+                    if (!preview.failed && preview.acknowledgedPointCount < stroke.points.length) {
+                        sendAnnotationPreviewChunk(stroke, true);
+                    } else {
+                        preview.commitRequested = false;
+                        commitAnnotationStroke(stroke);
+                    }
+                } else if (preview.pending ||
+                    (!preview.failed && preview.acknowledgedPointCount < stroke.points.length)) {
+                    sendAnnotationPreviewChunk(stroke);
+                }
+            });
+        }
+
+        function scheduleAnnotationPreview(stroke) {
+            const preview = stroke?.preview;
+            if (!preview || preview.failed || preview.timer || preview.inFlight) {
+                if (preview?.inFlight) preview.pending = true;
+                return;
+            }
+            preview.timer = setTimeout(() => {
+                preview.timer = null;
+                sendAnnotationPreviewChunk(stroke);
+            }, ANNOTATION_PREVIEW_INTERVAL_MS);
+        }
+
+        function onPointerDown(e) {
+            if (!annotationMode || isDrawing) return;
+            if (currentTool === 'laser') {
+                updateLaserPointer(e.clientX, e.clientY);
+                return;
+            }
+
+            if (currentTool === 'text') {
+                const input = document.getElementById('annotationTextInput');
+                const text = input.value.trim();
+                if (!text) {
+                    setAnnotationStatus('Type text before placing it');
+                    input.focus();
+                    return;
+                }
+                const point = getCanvasPoint(e.clientX, e.clientY);
+                const stroke = {
+                    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                    tool: 'text', text, color: currentColor, width: currentWidth,
+                    font_size: Math.max(12, Math.min(96, currentWidth * 8)),
+                    points: [point, { ...point }], slide_index: state.currentSlide - 1
+                };
+                strokes.push(stroke);
+                annotationBaseDirty = true;
+                setAnnotationStatus('Saving text…');
+                sendAnnotationStroke(stroke);
+                redrawAnnotations();
+                return;
+            }
+            
+            isDrawing = true;
+            activePointerId = e.pointerId;
+            annotationCanvas.setPointerCapture(e.pointerId);
+            const pt = getCanvasPoint(e.clientX, e.clientY);
+            
+            currentStroke = {
+                id: Date.now().toString(),
+                tool: currentTool,
+                color: currentTool === 'eraser' ? '#1e1e2f' : currentColor,
+                width: currentTool === 'eraser' ? currentWidth * 3 : currentWidth,
+                points: [pt],
+                pressure: e.pressure || 1.0,
+                slide_index: state.currentSlide - 1,
+                preview: ['pen', 'highlighter'].includes(currentTool) ? {
+                    acknowledgedPointCount: 1,
+                    anchors: [],
+                    inFlight: false,
+                    pending: false,
+                    commitRequested: false,
+                    failed: false,
+                    timer: null
+                } : null
+            };
+        }
+
+        function onPointerMove(e) {
+            if (isDrawing && e.pointerId !== activePointerId) return;
+            if (!annotationMode || !isDrawing) {
+                if (currentTool === 'laser' && annotationMode) {
+                    updateLaserPointer(e.clientX, e.clientY);
+                }
+                return;
+            }
+            
+            const moveEvents = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+            for (const moveEvent of moveEvents) {
+                if (currentStroke.points.length >= 10000) break;
+                currentStroke.points.push({
+                    ...getCanvasPoint(moveEvent.clientX, moveEvent.clientY),
+                    pressure: moveEvent.pressure ?? e.pressure ?? 1
+                });
+            }
+            currentStroke.pressure = e.pressure || 1.0;
+            
+            // Real-time preview
+            drawStrokePreview(currentStroke);
+            scheduleAnnotationPreview(currentStroke);
+        }
+
+        function onPointerUp(e) {
+            if (!annotationMode || !isDrawing || e.pointerId !== activePointerId) return;
+            isDrawing = false;
+            annotationCanvas.releasePointerCapture(activePointerId);
+            activePointerId = null;
+
+            const endPoint = {
+                ...getCanvasPoint(e.clientX, e.clientY),
+                pressure: e.pressure ?? 1
+            };
+            const lastPoint = currentStroke?.points[currentStroke.points.length - 1];
+            if (currentStroke && lastPoint && Math.hypot(endPoint.x - lastPoint.x, endPoint.y - lastPoint.y) > 0.5 &&
+                currentStroke.points.length < 10000) currentStroke.points.push(endPoint);
+            
+            if (currentStroke && currentStroke.points.length === 1) {
+                currentStroke.points.push({ ...currentStroke.points[0] });
+            }
+            if (currentStroke && currentStroke.points.length > 1) {
+                // Finalize stroke
+                strokes.push(currentStroke);
+                annotationBaseDirty = true;
+                setAnnotationStatus('Saving stroke…');
+                if (currentStroke.preview) sendAnnotationPreviewChunk(currentStroke, true);
+                else commitAnnotationStroke(currentStroke);
+            }
+            
+            currentStroke = null;
+            redrawAnnotations();
+        }
+
+        function cancelCurrentStroke() {
+            const cancelledStroke = currentStroke;
+            if (cancelledStroke?.preview?.timer) clearTimeout(cancelledStroke.preview.timer);
+            if (cancelledStroke?.preview &&
+                (cancelledStroke.preview.acknowledgedPointCount > 1 || cancelledStroke.preview.inFlight)) {
+                socket.emit('annotation_preview_cancel', {
+                    stroke_id: cancelledStroke.id,
+                    slide_index: cancelledStroke.slide_index
+                });
+            }
+            if (activePointerId !== null && annotationCanvas.hasPointerCapture(activePointerId)) {
+                annotationCanvas.releasePointerCapture(activePointerId);
+            }
+            activePointerId = null;
+            isDrawing = false;
+            currentStroke = null;
+            if (annotationCtx) redrawAnnotations();
+        }
+
+        function setAnnotationStatus(message, isError = false) {
+            const status = document.getElementById('annotationStatus');
+            if (!status) return;
+            status.textContent = message;
+            status.className = `px-2 text-[10px] font-semibold whitespace-nowrap ${isError ? 'text-rose-300' : 'text-gray-400'}`;
+        }
+
+        function onPointerCancel(e) {
+            if (e.pointerId === activePointerId) cancelCurrentStroke();
+        }
+
+        let previewFramePending = false;
+        function drawStrokePreview() {
+            if (previewFramePending) return;
+            previewFramePending = true;
+            requestAnimationFrame(() => {
+                previewFramePending = false;
+                redrawAnnotations();
+            });
+        }
+
+        function redrawAnnotations() {
+            const ctx = annotationCtx;
+            const canvas = annotationCanvas;
+            if (!ctx || !canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+
+            if (annotationBaseDirty || annotationBaseCanvas.width !== canvas.width ||
+                annotationBaseCanvas.height !== canvas.height) {
+                annotationBaseCanvas.width = canvas.width;
+                annotationBaseCanvas.height = canvas.height;
+                annotationBaseCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                annotationBaseCtx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+                strokes.forEach(stroke => {
+                    const normalized = Array.isArray(stroke.ppt_points) && stroke.ppt_points.length
+                        ? stroke.ppt_points
+                        : getPowerPointPoints(stroke.points || [], stroke.canvas_width, stroke.canvas_height);
+                    drawStroke(annotationBaseCtx, { ...stroke, points: mapPowerPointPointsToCanvas(normalized) });
+                });
+                annotationBaseDirty = false;
+            }
+
+            ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.drawImage(annotationBaseCanvas, 0, 0);
+            ctx.restore();
+            if (currentStroke) drawStroke(ctx, currentStroke, true);
+        }
+
+        function drawStroke(ctx, stroke, isPreview = false) {
+            if (stroke.points.length < 2) return;
+            
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = stroke.width;
+            ctx.globalAlpha = stroke.tool === 'highlighter' ? 0.4 : 1.0;
+            
+            if (stroke.tool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = stroke.color;
+            }
+            
+            switch (stroke.tool) {
+                case 'pen':
+                case 'highlighter':
+                case 'eraser':
+                    drawFreehand(ctx, stroke.points);
+                    break;
+                case 'arrow':
+                    drawArrow(ctx, stroke.points[0], stroke.points[stroke.points.length - 1]);
+                    break;
+                case 'rectangle':
+                    drawRectangle(ctx, stroke.points[0], stroke.points[stroke.points.length - 1]);
+                    break;
+                case 'circle':
+                    drawCircle(ctx, stroke.points[0], stroke.points[stroke.points.length - 1]);
+                    break;
+                case 'text':
+                    if (!isPreview) drawText(ctx, stroke);
+                    break;
+            }
+            
+            ctx.restore();
+        }
+
+        function drawFreehand(ctx, points) {
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                const xc = (points[i].x + points[i-1].x) / 2;
+                const yc = (points[i].y + points[i-1].y) / 2;
+                ctx.quadraticCurveTo(points[i-1].x, points[i-1].y, xc, yc);
+            }
+            ctx.lineTo(points[points.length-1].x, points[points.length-1].y);
+            ctx.stroke();
+        }
+
+        function drawArrow(ctx, start, end) {
+            const headLen = 15;
+            const angle = Math.atan2(end.y - start.y, end.x - start.x);
+            
+            ctx.beginPath();
+            ctx.moveTo(start.x, start.y);
+            ctx.lineTo(end.x, end.y);
+            ctx.stroke();
+            
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(end.x, end.y);
+            ctx.lineTo(end.x - headLen * Math.cos(angle - Math.PI/6), end.y - headLen * Math.sin(angle - Math.PI/6));
+            ctx.moveTo(end.x, end.y);
+            ctx.lineTo(end.x - headLen * Math.cos(angle + Math.PI/6), end.y - headLen * Math.sin(angle + Math.PI/6));
+            ctx.stroke();
+        }
+
+        function drawRectangle(ctx, start, end) {
+            ctx.beginPath();
+            ctx.rect(start.x, start.y, end.x - start.x, end.y - start.y);
+            ctx.stroke();
+        }
+
+        function drawCircle(ctx, start, end) {
+            const radius = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+            ctx.beginPath();
+            ctx.arc(start.x, start.y, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+
+        function drawText(ctx, stroke) {
+            ctx.font = `${stroke.font_size || stroke.width * 8}px Arial`;
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = stroke.color;
+            ctx.fillText(stroke.text || 'Text', stroke.points[0].x, stroke.points[0].y);
+        }
+
+        // Laser Pointer
+        function updateLaserPointer(clientX, clientY) {
+            const rect = annotationOverlay.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            
+            let laser = document.getElementById('laserPointer');
+            if (!laser) {
+                laser = document.createElement('div');
+                laser.id = 'laserPointer';
+                laser.className = 'laser-pointer';
+                annotationOverlay.appendChild(laser);
+            }
+            laser.style.left = x + 'px';
+            laser.style.top = y + 'px';
+            laser.style.display = 'block';
+            
+            clearTimeout(laserTimeout);
+            laserTimeout = setTimeout(hideLaserPointer, 100);
+        }
+
+        function hideLaserPointer() {
+            const laser = document.getElementById('laserPointer');
+            if (laser) laser.style.display = 'none';
+        }
+
+        // Annotation Actions
+        function clearCurrentSlideAnnotations() {
+            socket.emit('clear_annotations', { slide_index: state.currentSlide - 1 });
+        }
+
+        function undoLastAnnotation() {
+            socket.emit('undo_annotation', { slide_index: state.currentSlide - 1 });
+        }
+
+        function redoLastAnnotation() {
+            socket.emit('redo_annotation', { slide_index: state.currentSlide - 1 });
+        }
+
+        function loadSlideAnnotations(slideNumber) {
+            socket.emit('request_annotations', {
+                slide_index: slideNumber - 1,
+                request_id: ++annotationRequestId
+            });
+        }
+
+        function selectSlideAnnotations() {
+            cancelCurrentStroke();
+            if (strokesSlideIndex !== state.currentSlide - 1) {
+                strokes = [];
+                annotationBaseDirty = true;
+                strokesSlideIndex = state.currentSlide - 1;
+                redrawAnnotations();
+            }
+            loadSlideAnnotations(state.currentSlide);
+        }
+
+        // Gallery Rendering
+        window.addEventListener('resize', () => {
+            if(!views['advanced'].classList.contains('hidden')) {
+                renderGallery();
+            }
+        });
+
+        zoomSlider.addEventListener('input', (e) => {
+            renderGallery();
+        });
+
+        let swipeStart = null;
+        galleryGrid.addEventListener('pointerdown', (event) => {
+            if (parseInt(zoomSlider.value) !== 1 || annotationMode || event.pointerType !== 'touch') return;
+            swipeStart = { x: event.clientX, y: event.clientY };
+        }, { passive: true });
+        galleryGrid.addEventListener('pointerup', (event) => {
+            if (!swipeStart || parseInt(zoomSlider.value) !== 1 || annotationMode) return;
+            const deltaX = event.clientX - swipeStart.x;
+            const deltaY = event.clientY - swipeStart.y;
+            swipeStart = null;
+            if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+            navigateSingleSlide(deltaX < 0 ? 1 : -1);
+        }, { passive: true });
+        galleryGrid.addEventListener('pointercancel', () => { swipeStart = null; }, { passive: true });
+
+        function navigateSingleSlide(direction) {
+            navigateSlideBy(direction);
+        }
+
+        function navigateSlideBy(direction) {
+            if (!Number.isFinite(direction) || !state.totalSlides) return;
+            const step = direction > 0 ? 1 : -1;
+            const targetSlide = Math.max(1, Math.min(state.totalSlides, state.currentSlide + step));
+            if (targetSlide === state.currentSlide) return;
+            triggerCommand(step > 0 ? 'NEXT' : 'PREVIOUS');
+            state.currentSlide = targetSlide;
+            renderGallery();
+            selectSlideAnnotations();
+            if (annotationMode) {
+                socket.emit('annotation_mode', { enabled: true, slide_index: state.currentSlide - 1 });
+            }
+        }
+
+        function toggleGalleryLayout() {
+            galleryLayout = galleryLayout === 'grid' ? 'list' : 'grid';
+            galleryLayoutManuallySelected = true;
+            const button = document.getElementById('galleryLayoutToggle');
+            const listMode = galleryLayout === 'list';
+            button.textContent = listMode ? '▦ Grid' : '☷ List';
+            button.title = listMode ? 'Return to the slide grid' : 'Show every slide in a vertical list';
+            button.setAttribute('aria-pressed', String(listMode));
+            zoomSlider.disabled = listMode;
+            zoomSlider.parentElement.classList.toggle('opacity-40', listMode);
+            renderGallery();
+        }
+
+        function selectGallerySlide(slideNumber) {
+            if (!Number.isInteger(slideNumber) || slideNumber < 1 || slideNumber > state.totalSlides) return;
+            triggerCommand('JUMP', slideNumber);
+            state.currentSlide = slideNumber;
+            renderGallery();
+            selectSlideAnnotations();
+        }
+
+        function renderGallery() {
+            const cols = parseInt(zoomSlider.value);
+            const zoomValue = document.getElementById('zoomValue');
+            const listMode = galleryLayout === 'list';
+            const compactLandscape = !listMode && cols === 1 && window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
+            galleryContainer.classList.toggle('single-slide-landscape', compactLandscape);
+            views.advanced.classList.toggle('single-slide-landscape', compactLandscape);
+            document.body.classList.toggle('single-slide-landscape', compactLandscape);
+            if (zoomValue) zoomValue.textContent = listMode ? '1 slide per row' : cols === 1 ? '1 slide · swipe' : `${cols} columns`;
+            const layoutButton = document.getElementById('galleryLayoutToggle');
+            layoutButton.textContent = listMode ? '▦ Grid' : '☷ List';
+            layoutButton.title = listMode ? 'Return to the slide grid' : 'Show every slide in a vertical list';
+            layoutButton.setAttribute('aria-pressed', String(listMode));
+            zoomSlider.disabled = listMode;
+            zoomSlider.parentElement.classList.toggle('opacity-40', listMode);
+
+            if (deckData.length === 0) {
+                galleryGrid.style.display = 'flex';
+                galleryGrid.style.height = '';
+                galleryGrid.style.alignItems = 'center';
+                galleryGrid.style.justifyContent = 'center';
+                galleryGrid.style.padding = '1rem';
+                galleryGrid.innerHTML = '<div class="max-w-sm text-center text-gray-400"><div class="mb-3 text-4xl">📂</div><p class="font-bold text-white">No deck preview loaded</p><p class="mt-2 text-xs leading-relaxed">Open a PowerPoint presentation, start Slide Show, then use “Sync Open Deck” in the menu.</p></div>';
+                swipeHint.classList.add('hidden');
+                document.getElementById('advCurrentSlide').innerText = state.currentSlide;
+                document.getElementById('advTotalSlides').innerText = state.totalSlides || '--';
+                document.getElementById('advDeckName').innerText = state.presentationName || 'No Deck';
+                updateAnnotationBackground();
+                return;
+            }
+
+            if (listMode) {
+                // A grid's implicit rows shrink below the cards' aspect-ratio
+                // height in the scrollable flex container on mobile. Block
+                // layout gives every slide its own measured row and scroll area.
+                galleryGrid.style.display = 'block';
+                galleryGrid.style.flexDirection = '';
+                galleryGrid.style.alignItems = '';
+                galleryGrid.style.justifyContent = '';
+                galleryGrid.style.alignContent = '';
+                galleryGrid.style.justifyItems = '';
+                galleryGrid.style.gridTemplateColumns = '';
+                galleryGrid.style.gridAutoRows = '';
+                galleryGrid.style.padding = '0.75rem';
+                galleryGrid.style.height = '';
+                swipeHint.classList.add('hidden');
+                galleryGrid.innerHTML = deckData.map(slide => {
+                    const isActive = slide.slideNumber === state.currentSlide;
+                    const activeStyle = isActive ? 'ring-4 ring-[#61dafb]' : 'border-2 border-[#3a3a55]';
+                    return `
+                    <button type="button" id="thumb-${slide.slideNumber}" onclick="selectGallerySlide(${slide.slideNumber})"
+                         aria-label="Go to slide ${slide.slideNumber}" aria-current="${isActive ? 'true' : 'false'}"
+                         style="display:block; margin:0 auto 0.9rem; height:auto;"
+                         class="slide-list-card relative overflow-hidden rounded-xl cursor-pointer bg-[#111827] transition-shadow ${activeStyle}">
+                        <img src="${slide.url}" alt="Slide ${slide.slideNumber}" loading="lazy"
+                             class="absolute inset-0 block w-full h-full object-contain bg-black/20"
+                             onerror="this.style.display='none';">
+                        <span class="absolute bottom-2 right-2 bg-black/80 text-white font-bold px-2 py-1 rounded text-xs border border-white/10">
+                            ${slide.slideNumber} / ${state.totalSlides}
+                        </span>
+                    </button>`;
+                }).join('');
+                setTimeout(() => {
+                    const target = document.getElementById(`thumb-${state.currentSlide}`);
+                    if (target && !views['advanced'].classList.contains('hidden')) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 50);
+                document.getElementById('advCurrentSlide').innerText = state.currentSlide;
+                document.getElementById('advTotalSlides').innerText = state.totalSlides;
+                document.getElementById('advDeckName').innerText = state.presentationName || 'No Deck';
+                updateAnnotationBackground();
+                return;
+            }
+            
+            if (cols === 1) {
+                // FULL BLEED MODE
+                galleryGrid.style.display = 'flex';
+                galleryGrid.style.flexDirection = 'column';
+                galleryGrid.style.alignItems = 'center';
+                galleryGrid.style.justifyContent = 'center';
+                galleryGrid.style.gap = '0';
+                galleryGrid.style.padding = '0';
+                galleryGrid.style.height = '';
+                swipeHint.classList.remove('hidden');
+                swipeHint.querySelector('span').textContent = '← SWIPE TO NAVIGATE →';
+                
+                const slide = deckData.find(s => s.slideNumber === state.currentSlide) || deckData[0];
+                if (slide) {
+                    galleryGrid.innerHTML = `
+                        <div class="annotation-overlay-container w-full h-full flex items-center justify-center relative p-2">
+                            <img id="advanced-single-img" src="${slide.url}" 
+                                 class="max-w-full max-h-full object-contain" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="hidden text-gray-500 font-mono text-sm">Image Unavailable</div>
+                            <div class="single-slide-counter absolute top-4 right-4 bg-black/80 text-white font-bold px-3 py-1 rounded-full text-xs tracking-widest backdrop-blur-md border border-white/10 shadow-md">
+                                ${slide.slideNumber} / ${state.totalSlides}
+                            </div>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        const imgEl = document.getElementById('advanced-single-img');
+                        const availableH = Math.max(100, galleryGrid.getBoundingClientRect().height);
+                        galleryGrid.style.alignItems = 'center';
+                        galleryGrid.style.justifyContent = 'center';
+
+                        if (imgEl) {
+                            imgEl.style.maxHeight = Math.max(100, availableH - 16) + 'px';
+                            imgEl.style.maxWidth = '100%';
+                            imgEl.style.objectFit = 'contain';
+                        }
+                        
+                    }, 30);
+                }
+            } else {
+                // GRID MODE
+                galleryGrid.style.display = 'grid';
+                galleryGrid.style.flexDirection = '';
+                galleryGrid.style.alignItems = '';
+                galleryGrid.style.justifyContent = '';
+                galleryGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+                galleryGrid.style.gridAutoRows = 'max-content';
+                galleryGrid.style.alignContent = 'start';
+                galleryGrid.style.gap = '0.75rem';
+                galleryGrid.style.padding = '0.75rem';
+                galleryGrid.style.height = '';
+                swipeHint.classList.add('hidden');
+
+                galleryGrid.innerHTML = deckData.map(slide => {
+                    const isActive = slide.slideNumber === state.currentSlide;
+                    const activeStyle = isActive ? 'ring-4 ring-[#61dafb] scale-[0.98]' : 'border-2 border-transparent';
+
+                    return `
+                    <div id="thumb-${slide.slideNumber}" 
+                         onclick="selectGallerySlide(${slide.slideNumber})"
+                         class="relative w-full aspect-video rounded-[10px] overflow-hidden cursor-pointer bg-[#2a2a40] transition-transform ${activeStyle}">
+                        
+                        <img src="${slide.url}" 
+                         class="w-full h-full object-contain bg-black/20"
+                             onerror="this.style.display='none';">
+                        
+                        <div class="absolute bottom-2 right-2 bg-black/80 text-white font-bold px-2 py-1 rounded text-[10px] tracking-widest border border-white/10">
+                            ${slide.slideNumber}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+                setTimeout(() => {
+                    const target = document.getElementById(`thumb-${state.currentSlide}`);
+                    if (target && !views['advanced'].classList.contains('hidden')) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                    }
+                }, 50);
+            }
+            
+            // Update navigation UI
+            document.getElementById('advCurrentSlide').innerText = state.currentSlide;
+            document.getElementById('advTotalSlides').innerText = state.totalSlides;
+            document.getElementById('advDeckName').innerText = state.presentationName || (activeDeckId ? decks.find(d => d.id === activeDeckId)?.name || 'Unknown' : 'No Deck');
+            updateAnnotationBackground();
+        }
+
+        // Socket Events
+        socket.on('connect', () => {
+            setNetworkStatus('ONLINE', 'online');
+            socket.emit('request_deck_data');
+            socket.emit('request_deck_list');
+        });
+
+        socket.on('connect_error', () => {
+            setNetworkStatus(
+                socket.active ? 'SERVER UNAVAILABLE · RETRYING' : 'CONNECTION FAILED',
+                socket.active ? 'retrying' : 'error'
+            );
+        });
+
+        socket.on('disconnect', () => {
+            setNetworkStatus(
+                socket.active ? 'RECONNECTING…' : 'DISCONNECTED',
+                socket.active ? 'retrying' : 'error'
+            );
+        });
+
+        socket.on('system_sync', (syncedState) => {
+            const slideChanged = state.currentSlide !== syncedState.currentSlide;
+            const deckChanged = state.presentationId !== syncedState.presentationId;
+            state = { ...state, ...syncedState };
+            if (Array.isArray(syncedState.decks)) {
+                decks = syncedState.decks;
+                activeDeckId = syncedState.activeDeck || decks.find(deck => deck.is_active)?.id || null;
+                renderDeckList();
+            }
+            document.getElementById('lblCurrentSlide').innerText = state.currentSlide;
+            document.getElementById('lblTotalSlides').innerText = state.totalSlides;
+            document.getElementById('advCurrentSlide').innerText = state.currentSlide;
+            document.getElementById('advTotalSlides').innerText = state.totalSlides;
+            if (deckChanged) socket.emit('request_deck_data');
+            
+            if (!views['advanced'].classList.contains('hidden')) {
+                renderGallery();
+                if (slideChanged) {
+                    selectSlideAnnotations();
+                }
+            }
+        });
+
+        socket.on('deck_data_response', (data) => {
+            deckData = Array.isArray(data) ? data : [];
+            if (deckData.length > 0) state.totalSlides = deckData.length;
+            else if (!state.presentationId) state.totalSlides = 0;
+            state.currentSlide = Math.max(1, Math.min(state.currentSlide, Math.max(1, state.totalSlides)));
+            renderGallery();
+            if (annotationMode) selectSlideAnnotations();
+        });
+
+        socket.on('deck_list', (data) => {
+            decks = data || [];
+            activeDeckId = decks.find(deck => deck.is_active)?.id || decks[0]?.id || null;
+            renderDeckList();
+        });
+
+        socket.on('deck_sync_result', (result = {}) => {
+            const button = document.getElementById('syncDeckBtn');
+            const status = document.getElementById('deckSyncStatus');
+            button.disabled = false;
+            button.textContent = '↻ Sync Open Deck';
+            if (result.error) {
+                status.textContent = result.error;
+                status.className = 'mt-2 text-[11px] leading-relaxed text-rose-300';
+            } else {
+                status.textContent = result.message || 'Deck synced. Slide previews are ready.';
+                status.className = 'mt-2 text-[11px] leading-relaxed text-emerald-300';
+            }
+        });
+
+        socket.on('deck_switched', (data) => {
+            activeDeckId = data.deck_id;
+            deckData = data.slides || [];
+            state.totalSlides = deckData.length || state.totalSlides;
+            state.currentSlide = data.current_slide || 1;
+            renderDeckList();
+            renderGallery();
+            selectSlideAnnotations();
+        });
+
+        socket.on('annotation_added', (data) => {
+            // Received annotation from another client or server
+            if (data.slide_index === state.currentSlide - 1 && annotationMode) {
+                const stroke = {
+                    id: data.stroke_id,
+                    tool: data.tool,
+                    color: data.color,
+                    width: data.width,
+                    points: data.points
+                };
+                strokes.push(stroke);
+                annotationBaseDirty = true;
+                redrawAnnotations();
+            }
+        });
+
+        socket.on('annotations_loaded', (data) => {
+            if (data.slide_index === state.currentSlide - 1 &&
+                data.request_id === annotationRequestId && Array.isArray(data.strokes)) {
+                strokes = data.strokes;
+                annotationBaseDirty = true;
+                redrawAnnotations();
+                setAnnotationStatus('Annotations loaded');
+            } else if (data.slide_index === state.currentSlide - 1 && data.request_id === annotationRequestId && data.error) {
+                setAnnotationStatus('Could not load saved annotations', true);
+            }
+        });
+
+        socket.on('annotations_updated', (data) => {
+            if (data.slide_index === state.currentSlide - 1 && Array.isArray(data.strokes)) {
+                strokes = data.strokes;
+                annotationBaseDirty = true;
+                redrawAnnotations();
+                setAnnotationStatus('Saved');
+            }
+        });
+
+        socket.on('annotation_confirmed', (data) => {
+            if (data.error) {
+                strokes = strokes.filter(stroke => stroke.id !== data.stroke_id);
+                annotationBaseDirty = true;
+                redrawAnnotations();
+                loadSlideAnnotations(state.currentSlide);
+                setAnnotationStatus(`Could not save: ${data.error}`, true);
+            } else {
+                if (data.projected) {
+                    const elapsed = Number.isFinite(data.projection_ms)
+                        ? ` · ${Math.round(data.projection_ms)} ms` : '';
+                    setAnnotationStatus(`Saved to PowerPoint${elapsed}`);
+                } else if (data.projection_error) {
+                    const status = data.projection_error.startsWith('Edit Mode:')
+                        ? 'Saved here · start the PowerPoint slide show to project it'
+                        : 'Saved here · PowerPoint session unavailable. Restart the controller in the same Windows account/session as PowerPoint.';
+                    setAnnotationStatus(status, true);
+                    console.warn('[ANNOTATION] PowerPoint projection failed:', data.projection_error);
+                } else {
+                    setAnnotationStatus('Saved here · start the PowerPoint slide show to project it');
+                }
+            }
+        });
+
+        socket.on('annotations_cleared', (data) => {
+            if (!data.error && data.slide_index === state.currentSlide - 1) {
+                strokes = [];
+                annotationBaseDirty = true;
+                redrawAnnotations();
+                setAnnotationStatus('Slide cleared');
+            } else if (data.error) {
+                setAnnotationStatus(`Could not clear: ${data.error}`, true);
+            }
+        });
+
+        socket.on('annotation_undone', (data) => {
+            if (data.slide_index === state.currentSlide - 1 && Array.isArray(data.strokes)) {
+                strokes = data.strokes;
+                annotationBaseDirty = true;
+                redrawAnnotations();
+                setAnnotationStatus('Undone');
+            } else if (data.error) {
+                setAnnotationStatus(`Could not undo: ${data.error}`, true);
+            }
+        });
+
+        socket.on('annotation_redone', (data) => {
+            if (data.slide_index === state.currentSlide - 1 && Array.isArray(data.strokes)) {
+                strokes = data.strokes;
+                annotationBaseDirty = true;
+                redrawAnnotations();
+                setAnnotationStatus('Redone');
+            } else if (data.error) {
+                setAnnotationStatus(`Could not redo: ${data.error}`, true);
+            }
+        });
+
+        // Commands
+        function fastTrigger(e, cmd) {
+            e.preventDefault(); 
+            if (cmd === 'BLACKOUT') toggleBlackoutState();
+            else triggerCommand(cmd);
+            
+            if(cmd === 'NEXT' && state.currentSlide < state.totalSlides) state.currentSlide++;
+            if(cmd === 'PREVIOUS' && state.currentSlide > 1) state.currentSlide--;
+            
+            document.getElementById('lblCurrentSlide').innerText = state.currentSlide;
+            document.getElementById('advCurrentSlide').innerText = state.currentSlide;
+        }
+
+        function triggerCommand(cmd, targetSlide = null) {
+            const payload = { command: cmd };
+            if (targetSlide !== null) payload.target = parseInt(targetSlide);
+            socket.emit('hardware_command', payload);
+
+            // Do not make slide navigation wait for the browser's haptics API.
+            if (navigator.vibrate) {
+                requestAnimationFrame(() => navigator.vibrate(40));
+            }
+        }
+
+        // Microphone
+        async function initContinuousMic() {
+            if (micInitialized) return;
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 },
+                    video: false
+                });
+
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+                const source = audioCtx.createMediaStreamSource(audioStream);
+                audioProc = audioCtx.createScriptProcessor(4096, 1, 1);
+
+                audioProc.onaudioprocess = (e) => {
+                    const f32 = e.inputBuffer.getChannelData(0);
+                    const i16 = new Int16Array(f32.length);
+                    for (let i = 0; i < f32.length; i++) {
+                        let s = Math.max(-1, Math.min(1, f32[i]));
+                        i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                    }
+                    socket.emit('audio_stream_chunk', i16.buffer);
+                };
+
+                source.connect(audioProc);
+                audioProc.connect(audioCtx.destination);
+                micInitialized = true;
+                
+                document.getElementById('micText').innerText = "STREAMING LIVE...";
+                document.getElementById('micText').className = "text-lg font-black tracking-widest text-[#4CAF50] uppercase animate-pulse";
+                document.getElementById('micSubtext').innerText = "System is actively listening";
+
+            } catch (e) {
+                document.getElementById('micText').innerText = "MIC BLOCKED";
+                document.getElementById('micText').className = "text-lg font-black tracking-widest text-[#E91E63] uppercase";
+                document.getElementById('micSubtext').innerText = "Please allow mic permissions";
+            }
+        }
+
+        // Initialize
+        init();
+        document.getElementById('lblCurrentSlide').innerText = state.currentSlide;
+        document.getElementById('lblTotalSlides').innerText = state.totalSlides;
+    </script>
+</body>
+</html>

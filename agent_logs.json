@@ -1,0 +1,22 @@
+[
+  {
+    "timestamp": "2026-07-09 11:05:00",
+    "key_label": "key-1",
+    "model": "gemini-3.1-flash-lite",
+    "prompt": "Explain the quicksort algorithm briefly.",
+    "response": "Quicksort is a divide-and-conquer algorithm. It picks an element as a pivot and partitions the given array around the picked pivot.",
+    "prompt_tokens": 12,
+    "completion_tokens": 30,
+    "total_tokens": 42
+  },
+  {
+    "timestamp": "2026-07-09 11:05:30",
+    "key_label": "key-2",
+    "model": "gemini-3.1-flash-lite",
+    "prompt": "Verify if this quicksort explanation is accurate: Quicksort is a divide-and-conquer algorithm...",
+    "response": "Yes, this explanation is accurate and clearly states the core divide-and-conquer partition strategy of quicksort.",
+    "prompt_tokens": 48,
+    "completion_tokens": 20,
+    "total_tokens": 68
+  }
+]
